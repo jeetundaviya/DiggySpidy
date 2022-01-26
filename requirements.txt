@@ -1,0 +1,8 @@
+pysocks
+bs4
+prettytable
+stem
+fake_useragent
+urllib
+pandas
+datetime
