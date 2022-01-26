@@ -155,7 +155,7 @@ class DiggySpidy:
 				print(f'[-] Unable to scrape {url} ({res.status_code}).')
 		except Exception as e:
 			self.failed_scraped_links.append(url)
-			print(f'[-] Unable to scrape {url} ({res.status_code}) [{e}].')
+			print(f'[-] Unable to scrape {url} [{e}].')
 		return False
 		
 
