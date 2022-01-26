@@ -1,5 +1,6 @@
 pysocks
 bs4
+lxml
 prettytable
 stem
 fake_useragent
