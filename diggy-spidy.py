@@ -12,7 +12,6 @@ import time
 from stem import Signal
 from stem.control import Controller
 import sys
-import pandas as pd
 from urllib.parse import urljoin
 
 BLUE, RED, WHITE, YELLOW, GREEN, END = '\33[94m', '\033[91m', '\33[97m', '\33[93m', '\033[32m', '\033[0m'
@@ -96,8 +95,6 @@ class DiggySpidy:
 		
 		self.session = req.session()
 
-		self.session.headers = {'User-Agent': UserAgent().random}
-
 		your_ip_res = self.session.get(ip_url)
 
 		if your_ip_res.status_code ==200: 
@@ -144,23 +141,25 @@ class DiggySpidy:
 		return self.session
 
 	def get_res(self,url):
+
 		if 'http' not in url:
 			url='http://'+url
 		try:
+			self.session.headers = {'User-Agent': UserAgent().random}
 			res = self.session.get(url)
 			if res.status_code == 200:
 				return res
 			else:
 				self.failed_scraped_links.append(url)
-				print(f'[-] Unable to scrape {url} ({res.status_code}).')
+				self.errors.append(f'[-] Unable to scrape {url} ({res.status_code})')
 		except Exception as e:
 			self.failed_scraped_links.append(url)
-			print(f'[-] Unable to scrape {url} [{e}].')
+			self.errors.append(f'[-] Unable to scrape {url} [{e}]')
 		return False
 		
 
 
-	def fetch_links(self,tag_list,attribute):
+	def extract_links_from_tag_attribute(self,tag_list,attribute):
 		
 		links = []
 
@@ -251,9 +250,9 @@ class DiggySpidy:
 				heading_tags = [h.text for h_list in h_lists for h in h_list] 
 				p_tags = [p.text for p in soup.find_all('p')]
 				a_tags = soup.find_all('a')
-				a_links = self.purify_links(base_url=url,links=self.fetch_links(a_tags, 'href')) 	
+				a_links = self.purify_links(base_url=url,links=self.extract_links_from_tag_attribute(a_tags, 'href')) 	
 				img_tags = soup.find_all('img')
-				img_links = self.purify_links(base_url=url,links=self.fetch_links(img_tags, 'src'))	
+				img_links = self.purify_links(base_url=url,links=self.extract_links_from_tag_attribute(img_tags, 'src'))	
 			except TypeError:
 				pass
 
@@ -261,6 +260,7 @@ class DiggySpidy:
 			
 			data_dict = {
 			'url':url,
+			'folder_location':url_folder_name,
 			'text':all_text,
 			'html':raw_html,
 			'title': title_text,
@@ -300,6 +300,7 @@ class DiggySpidy:
 			return data_dict
 
 
+
 	def get_unique_but_remaining_to_scrap_links(self):
 		
 		'''This will be baised on old linked taking refrence from unique_link.txt and scraped_link.txt'''
@@ -335,11 +336,13 @@ class DiggySpidy:
 		if self.verbose_output:
 			clear_screen()
 			print_logo()
-			print(f'[+] Success count : {len(self.successful_scraped_links)}/{self.max_crawl_count}',end='\n\n')
-			print(f'[+] Fail count : {len(self.failed_scraped_links)}/{len(self.unique_links)}',end='\n\n')
-			print(f'[+] Desired links count : {len(self.must_have_words_filtered_links)}',end='\n\n')
-			print(f'[+] Links found : {len(self.unique_links)}',end='\n\n')
+			print(f'[+] Success count : {len(self.successful_scraped_links)}/{self.max_crawl_count}  [+] Fail count : {len(self.failed_scraped_links)}/{len(self.unique_links)} [+] Links found : {len(self.unique_links)}',end='\n\n')
+			if self.must_have_words_filtered_links:
+				print(f'[+] Desired links count : {len(self.must_have_words_filtered_links)}',end='\n\n')
+			print(f'[+] Latest Fake UserAgent : {self.session.headers}',end='\n\n')
 			print(f'[+] Latest website : {self.successful_scraped_links[-1].url}',end='\n\n')
+			if self.errors:
+				print(f'[+] Last error : {self.errors[-1]}',end='\n\n')
 			table = PrettyTable(field_names=['URL','<a> tag count','<img> tag count','<p> tag count','<hi> heading tags count'])
 			
 			for link in self.successful_scraped_links:
@@ -368,7 +371,7 @@ class DiggySpidy:
 				u_links = f.readlines()
 				self.old_unique_links = u_links 
 
-	def crawl(self,start_url):
+	def crawl(self,start_url,save_to=None):
 		if len(self.successful_scraped_links) >= self.max_crawl_count:
 			self.save_file(file_name='successful_scraped_links.txt',data_list=self.get_current_scraped_list())
 			self.save_file(file_name='unique_links.txt',data_list=self.unique_links)
@@ -377,11 +380,16 @@ class DiggySpidy:
 			print('[-] Exiting ...')
 			exit(0)
 
-		start_data_dic = self.scarp(start_url)
+		if save_to == None:
+			save_to = self.default_folder_location
+
+		start_data_dic = self.scarp(start_url,save_to)
 
 		if start_data_dic:
 			
 			links = start_data_dic['a_links']
+
+			folder_location = start_data_dic['folder_location']
 
 			filterd_links = [link for link in links if '.' in link and link not in self.unique_links and not self.is_stopword_in_link(link,self.stopwords_in_link)]
 
@@ -391,15 +399,14 @@ class DiggySpidy:
 			for link in filterd_links:
 				try:
 					# print(f'[+] Total scarped {self.crawl_count} websites.')
-					self.crawl(link)
+					self.crawl(link,folder_location)
 					time.sleep(self.pause_crawl_duration)
 				except Exception as e:
-					print(f"[SCRIPT ERROR] {e} for {link}")
-					self.failed_scraped_links.append(start_url)
-					time.sleep(5)
-					pass	
+					self.errors.append(f"[-] Unable to crawl {link} (E:{e})")
+					self.failed_scraped_links.append(start_url)	
 
 	def __init__(self):
+		self.errors = []
 		self.tor_proxy = {'http':'socks5h://127.0.0.1:9050','https':'socks5h://127.0.0.1:9050'}
 		self.session = req.session()
 		self.controller_port_password = None 
@@ -457,6 +464,10 @@ if __name__ == '__main__':
 			obj = DiggySpidy()
 
 			obj.current_crawled_url = url
+
+			if args.output:
+				if not os.path.isdir(args.output):
+					os.mkdir(args.output)
 
 			obj.default_folder_location = args.output
 
