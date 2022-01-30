@@ -458,6 +458,7 @@ class DiggySpidy:
 			print(f'[+] Success count : {len(self.successful_scraped_links)}/{self.max_crawl_count}  [+] Fail count : {len(self.failed_scraped_links)}/{len(self.unique_links)} [+] Links found : {len(self.unique_links)}',end='\n\n')
 			if self.must_have_words_filtered_links:
 				print(f'[+] Desired links count : {len(self.must_have_words_filtered_links)}',end='\n\n')
+			print(f'[+] Current crawling depth : {self.current_crawl_depth}',end='\n\n')
 			print(f'[+] Latest website : {self.successful_scraped_links[-1].url}',end='\n\n')
 			if self.errors:
 				print(f'[+] Last error : {self.errors[-1]}',end='\n\n')
@@ -490,7 +491,13 @@ class DiggySpidy:
 				u_links = f.readlines()
 				self.old_unique_links = u_links 
 
-	def crawl(self,start_url,save_to=None):
+	def crawl(self,start_url,crawl_depth=0,save_to=None):
+
+		if crawl_depth > self.crawl_depth: 
+			return
+
+		self.current_crawl_depth = crawl_depth
+
 		if len(self.successful_scraped_links) >= self.max_crawl_count:
 			self.save_file(file_name='successful_scraped_links.txt',data_list=self.get_current_scraped_list())
 			self.save_file(file_name='unique_links.txt',data_list=self.unique_links)
@@ -523,7 +530,7 @@ class DiggySpidy:
 			
 			for link in filterd_links:
 				try:
-					self.crawl(link,folder_location)
+					self.crawl(link,crawl_depth=crawl_depth+1,save_to=folder_location)
 					time.sleep(self.pause_crawl_duration)
 				except Exception as e:
 					self.errors.append(f"[-] Unable to crawl {link} (E:{e})")
@@ -542,6 +549,8 @@ class DiggySpidy:
 		self.controller_port_password = None 
 		self.changing_ip_after_minutes = 25
 		self.max_crawl_count = 1000
+		self.crawl_depth = 5
+		self.current_crawl_depth = 0
 		self.pause_crawl_duration = 0
 		self.failed_scraped_links = []
 		self.successful_scraped_links = []
@@ -570,6 +579,7 @@ if __name__ == '__main__':
 	parser.add_argument('--url','-u',default='',help='Enter url to scrape or crawl.')
 	parser.add_argument('--print-ip-details',action='store_true',help='It will dump your current external ip , geo location and other related information.Use it for conformation if connected to proxy and you are not leaking your external ip by accident.')
 	parser.add_argument('--crawl','-c',action='store_true',help='Crawls whole website and scrapes all the links recursively.')
+	parser.add_argument('--crawl-depth','-cd',default=5,help='How much deeper should it crawl.')
 	parser.add_argument('--fast',action='store_true',help='In this mode will not capture screenshot of website. And fail count might be more.')
 	parser.add_argument('--slow',action='store_true',help='It this mode crawler will capture (normal and full) screenshot of website.And fail count might be decreased.')
 	parser.add_argument('--use-random-fake-user-agent',action='store_true',help='It will randomly choose fake User-Agent and copy it in header before sending every get request.')
@@ -610,6 +620,8 @@ if __name__ == '__main__':
 				obj.current_crawled_url = url
 
 				obj.is_slow_mode = args.slow
+
+				obj.crawl_depth = int(args.crawl_depth)
 
 				obj.use_random_fake_user_agent = args.use_random_fake_user_agent
 
