@@ -638,7 +638,7 @@ if __name__ == '__main__':
 				obj.must_torrify = args.must_torrify
 
 				if 'onion' in url and not args.must_torrify:
-					wish = input('[+] Entered link is an onion link hence automatically using tor proxy.')
+					print('[+] Entered link is an onion link hence automatically using tor proxy.')
 					obj.must_torrify = True
 
 				obj.max_crawl_count = int(args.stopcount)
