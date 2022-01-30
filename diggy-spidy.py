@@ -6,7 +6,6 @@ import pandas as pd
 import json
 import os
 from argparse import ArgumentParser
-import datetime
 from prettytable import PrettyTable
 from fake_useragent import UserAgent
 import time
@@ -83,10 +82,12 @@ def get_list_from_file(file):
 class ScrapedLink:
 	def __init__(self,url):
 		self.url = url
-		self.a_tag_count = 0
-		self.img_tag_count = 0
-		self.p_tag_count = 0
-		self.h_tag_count = 0
+		self.title = ''
+		self.a_tags = 0
+		self.img_tags = 0
+		self.p_tags = 0
+		self.h_tags = 0
+		self.html_text = ''
 
 class DiggySpidy:
 
@@ -295,7 +296,18 @@ class DiggySpidy:
 
 	def get_current_scraped_list(self): #wrote this function for avoid code repetation everytime for gettin only links!
 		return [link.url for link in self.successful_scraped_links]
-
+	
+	def get_current_scraped_dict(self): #wrote this function for avoid code repetation everytime for gettin only links!
+		scraped_links_dict = {}
+		scraped_links_dict['URL'] = [link.url for link in self.successful_scraped_links]
+		scraped_links_dict['title'] = [link.title for link in self.successful_scraped_links]
+		scraped_links_dict['a'] = [link.a_tags for link in self.successful_scraped_links]
+		scraped_links_dict['img'] = [link.img_tags for link in self.successful_scraped_links]
+		scraped_links_dict['p'] = [link.p_tags for link in self.successful_scraped_links]
+		scraped_links_dict['hi'] = [link.h_tags for link in self.successful_scraped_links]
+		scraped_links_dict['html_text'] = [link.html_text for link in self.successful_scraped_links]
+		return scraped_links_dict
+	
 	def purify_links(self,base_url,links):
 		purified_links = []
 		for link in links:
@@ -394,10 +406,12 @@ class DiggySpidy:
 					self.must_have_words_filtered_links.append(url)
 
 			current_scraped_url = ScrapedLink(data_dict['url'])
-			current_scraped_url.img_tag_count = len(data_dict['img_links'])
-			current_scraped_url.a_tag_count = len(data_dict['a_links'])
-			current_scraped_url.h_tag_count = len(data_dict['headings'])
-			current_scraped_url.p_tag_count = len(data_dict['p'])
+			current_scraped_url.title = data_dict['title']
+			current_scraped_url.img_tags = data_dict['img_links']
+			current_scraped_url.a_tags = data_dict['a_links']
+			current_scraped_url.h_tags = data_dict['headings']
+			current_scraped_url.p_tags = data_dict['p']
+			current_scraped_url.html_text = data_dict['text']
 
 			self.successful_scraped_links.append(current_scraped_url)
 
@@ -476,7 +490,7 @@ class DiggySpidy:
 		self.analysis_table = PrettyTable(field_names=['URL','<a> tag count','<img> tag count','<p> tag count','<hi> heading tags count'])
 			
 		for link in self.successful_scraped_links:
-			self.analysis_table.add_row([minify_url(link.url),link.a_tag_count,link.img_tag_count,link.p_tag_count,link.h_tag_count])
+			self.analysis_table.add_row([minify_url(link.url),len(link.a_tags),len(link.img_tags),len(link.p_tags),len(link.h_tags)])
 
 	def load_old_scraped_and_unique_links(self):
 		file = os.path.join(self.default_folder_location,f'successful_scraped_links.txt')
@@ -759,7 +773,10 @@ if __name__ == '__main__':
 					obj.crawl(url)
 				else:
 					obj.scarp(url)
-				
+
+				#Saving all data in a csv format for scrapped link.
+				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_folder_location,f'All_Scrapped_Data_{round(time.time())}.csv'))
+		
 				if args.print_ip_details:
 					print('[+] Your current IP location.\n')
 					obj.print_ip_desc_table()		
@@ -769,5 +786,9 @@ if __name__ == '__main__':
 		obj.save_file(file_name='unique_links.txt',data_list=obj.unique_links)
 		obj.get_unique_but_remaining_to_scrap_links()
 		obj.print_live_updates()
+
+		#Saving all data in a csv format for scrapped link.
+		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_folder_location,f'All_Scrapped_Data_{round(time.time())}.csv'))
+			
 		print('\n[-] Quiting ...')
 		exit(0)
