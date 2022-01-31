@@ -19,6 +19,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import base64
 import socket
+from threading import Thread
+import threading
 
 BLUE, RED, WHITE, YELLOW, GREEN, END = '\33[94m', '\033[91m', '\33[97m', '\33[93m', '\033[32m', '\033[0m'
 
@@ -475,9 +477,8 @@ class DiggySpidy:
 	def print_live_updates(self):
 		
 		minify_url = lambda url : url if len(url) < 50 else url[:50]+'...'
-		total_to_be_scraped_count = self.max_crawl_count if len(self.unique_links) == 0 or len(self.unique_links) > self.max_crawl_count else len(self.unique_links)
-		success_count = f'[+] Success count : {len(self.successful_scraped_links)}/{total_to_be_scraped_count}'
-		fail_count = f'[+] Fail count : {len(self.failed_scraped_links)}/{len(self.successful_scraped_links)}'
+		success_count = f'[+] Success count : {len(self.successful_scraped_links)}'
+		fail_count = f'[+] Fail count : {len(self.failed_scraped_links)}'
 		link_count = f'[+] Links found : {len(self.unique_links)}'
 		latest_website = f'[+] Latest website : {minify_url(self.successful_scraped_links[-1].url)}'
 
@@ -486,7 +487,7 @@ class DiggySpidy:
 
 			print_logo()
 
-			print(f' {success_count} {fail_count} {link_count}',end='\n\n')
+			print(f'{success_count} {fail_count} {link_count}',end='\n\n')
 			if self.must_have_words_filtered_links:
 				print(f'[+] Desired links count : {len(self.must_have_words_filtered_links)}',end='\n\n')
 			print(f'[+] Current crawling depth : {self.current_crawl_depth}',end='\n\n')
@@ -552,18 +553,25 @@ class DiggySpidy:
 
 			filterd_links = []
 
+			
+
 			for link in links:
 				if ('.' in link):
-					 if (link not in self.unique_links):
-						 if not self.includes_stop_words(link):
-							 if self.includes_must_have_words(link):
+					if link not in self.get_current_scraped_list() or link+'/' not in self.get_current_scraped_list():
+						if (link not in self.unique_links):
+							if not self.includes_stop_words(link):
+								if self.includes_must_have_words(link):
 									filterd_links.append(link)
-		
+			
 			self.unique_links += filterd_links
 			
 			for link in filterd_links:
 				try:
-					self.crawl(link,crawl_depth=crawl_depth+1,save_to=folder_location)
+					if len(threading.enumerate()) > 11:
+						Thread(target=self.crawl,args=(link,crawl_depth+1,folder_location,)).start()
+					else:
+						self.crawl(link,crawl_depth=crawl_depth+1,save_to=folder_location)
+					
 					time.sleep(self.pause_crawl_duration)
 				except Exception as e:
 					self.errors.append(f"[-] Unable to crawl {link} (E:{e})")
@@ -587,8 +595,10 @@ class DiggySpidy:
 		self.pause_crawl_duration = 0
 		self.failed_scraped_links = []
 		self.successful_scraped_links = []
+		
 		self.includes_stop_words = lambda link : (self.are_any_words_in_link(link,self.stopwords_in_link) if self.stopwords_in_link else False)
 		self.includes_must_have_words = lambda link: (self.are_any_words_in_link(link,self.must_have_words_in_link) if self.must_have_words_in_link else True) 
+		
 		self.analysis_table = PrettyTable(field_names=['URL','<a> tag count','<img> tag count','<p> tag count','<hi> heading tags count'])
 		self.unique_links = []
 		self.old_unique_links = []
