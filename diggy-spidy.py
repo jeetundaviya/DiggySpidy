@@ -110,7 +110,7 @@ class DiggySpidy:
 		
 		if self.use_random_fake_user_agent:
 			self.driver_options.add_argument(f'user-agent={UserAgent().random}')
-
+		
 		self.driver = webdriver.Chrome(options=self.driver_options)
 		
 		self.driver.maximize_window() # Maximizing window by default
