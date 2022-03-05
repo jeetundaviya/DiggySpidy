@@ -375,6 +375,7 @@ class DiggySpidy:
 					img_tags = soup.find_all('img')
 					img_links = self.purify_links(base_url=url,links=self.extract_links_from_tag_attribute(img_tags, 'src'))	
 				except TypeError:
+
 					pass
 
 				all_text = soup.get_text()
@@ -420,20 +421,20 @@ class DiggySpidy:
 				if self.must_have_words:
 					if self.is_must_have_words_in_data(data=all_text):
 						self.must_have_words_filtered_links.append(url)
-						pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(obj.default_output_folder_location,'Last_Session_Must_Have_Words_Scrapped_Links_Data.csv'))
+						pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(self.last_session_data_folder,'Last_Session_Must_Have_Words_Scrapped_Links_Data.csv'))
 
 				#Saving all data in a csv format for scrapped link.
-				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_output_folder_location,f'Last_Session_All_Scrapped_Links_Data.csv'))
+				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(self.last_session_data_folder,f'Last_Session_All_Scrapped_Links_Data.csv'))
 				
 
-				self.save_file(file_name='analysis_table.txt',folder_location=self.default_output_folder_location,data=self.analysis_table.get_string().encode())
-				self.save_file(file_name='successful_scraped_links.txt',data_list=self.get_current_scraped_list())
-				self.save_file(file_name='unique_links.txt',data_list=self.unique_links)
-				self.save_file(file_name='must_have_words_links.txt',data_list=self.must_have_words_filtered_links)
+				self.save_file(file_name='analysis_table.txt',folder_location=self.last_session_data_folder,data=self.analysis_table.get_string().encode())
+				self.save_file(file_name='successful_scraped_links.txt',folder_location=self.last_session_data_folder,data_list=self.get_current_scraped_list())
+				self.save_file(file_name='unique_links.txt',folder_location=self.last_session_data_folder,data_list=self.unique_links)
+				self.save_file(file_name='must_have_words_links.txt',folder_location=url_folder_name,data_list=self.must_have_words_filtered_links)
 				self.save_file(file_name=only_url+'.json',folder_location=url_folder_name,data=data_json.encode())
 				self.save_file(file_name=only_url+'.html',folder_location=html_folder,data=raw_html.encode())
 				self.save_file(file_name=only_url+'.txt',folder_location=html_folder,data=all_text.encode())
-				self.save_file(file_name='error.txt',folder_location=self.default_output_folder_location,data_list=self.errors)
+				self.save_file(file_name='error.txt',folder_location=self.last_session_data_folder,data_list=self.errors)
 				self.save_file(file_name='a_links.txt',folder_location=links_folder,data_list=a_links) if len(data_dict['a_links']) > 0 else None
 				self.save_file(file_name='img_links.txt',folder_location=links_folder,data_list=img_links) if len(data_dict['img_links']) > 0 else None
 
@@ -442,13 +443,6 @@ class DiggySpidy:
 			self.failed_scraped_links.append(url)
 			self.errors.append(f'[-] Unable to scrape {url} [{e}]')
 
-	def get_unique_but_remaining_to_scrap_links(self):
-		
-		'''This will be baised on old linked taking refrence from unique_link.txt and scraped_link.txt'''
-		
-		self.load_old_scraped_and_unique_links()
-
-		self.save_file(file_name='remaining_links.txt',data_list=[link for link in self.old_unique_links if link not in self.old_successful_scraped_links])
 
 	def are_any_words_in_link(self,link,words):
 		if words:
@@ -508,19 +502,6 @@ class DiggySpidy:
 		for link in self.successful_scraped_links:
 			self.analysis_table.add_row([minify_url(link.url),len(link.a_tags),len(link.img_tags),len(link.p_tags),len(link.h_tags)])
 
-	def load_old_scraped_and_unique_links(self):
-		file = os.path.join(self.default_output_folder_location,f'successful_scraped_links.txt')
-		if os.path.isfile(file):
-			with open(file,'r') as f:
-				s_links = f.readlines()
-				self.old_unique_links = s_links
-
-		file = os.path.join(self.default_output_folder_location,f'unique_links.txt')
-		if os.path.isfile(file):
-			with open(file,'r') as f:
-				u_links = f.readlines()
-				self.old_unique_links = u_links 
-
 	def crawl(self,start_url,crawl_depth=0,save_to=None):
 
 		if crawl_depth > self.crawl_depth: 
@@ -531,9 +512,8 @@ class DiggySpidy:
 		self.current_crawl_depth = crawl_depth
 
 		if len(self.successful_scraped_links) >= self.max_crawl_count:
-			self.save_file(file_name='successful_scraped_links.txt',data_list=self.get_current_scraped_list())
-			self.save_file(file_name='unique_links.txt',data_list=self.unique_links)
-			self.get_unique_but_remaining_to_scrap_links()
+			self.save_file(file_name='successful_scraped_links.txt',folder_location=self.last_session_data_folder,data_list=self.get_current_scraped_list())
+			self.save_file(file_name='unique_links.txt',folder_location=self.last_session_data_folder,data_list=self.unique_links)
 			print('\n[-] Reached to max crawl count!')
 			print('[-] Exiting ...')
 			exit(0)
@@ -551,8 +531,6 @@ class DiggySpidy:
 
 			filterd_links = []
 
-			
-
 			for link in links:
 				if ('.' in link):
 					if link not in self.get_current_scraped_list() or link+'/' not in self.get_current_scraped_list():
@@ -565,7 +543,7 @@ class DiggySpidy:
 			
 			for link in filterd_links:
 				try:
-					if len(threading.enumerate()) > 11:
+					if (len(threading.enumerate())-1) > MAX_THREAD_COUNT:
 						Thread(target=self.crawl,args=(link,crawl_depth+1,folder_location,)).start()
 					else:
 						self.crawl(link,crawl_depth=crawl_depth+1,save_to=folder_location)
@@ -604,6 +582,7 @@ class DiggySpidy:
 		self.must_have_words_in_link = []
 		self.must_have_words = []
 		self.default_output_folder_location = os.getcwd()
+		self.last_session_data_folder = os.path.join(self.default_output_folder_location,"extra_data")
 		self.verbose_output = False
 		self.must_have_words_filtered_links = []
 		self.changing_ip_after_number_scarpped_website = 25
@@ -619,14 +598,14 @@ if __name__ == '__main__':
 	parser = ArgumentParser()
 
 	parser.add_argument('--url','-u',default='',help='Enter url to scrape or crawl.')
-	parser.add_argument('--print-ip-details',action='store_true',help='It will dump your current external ip , geo location and other related information.Use it for conformation if connected to proxy and you are not leaking your external ip by accident.')
+	parser.add_argument('--print-ip-details','-pid',action='store_true',help='It will dump your current external ip , geo location and other related information.Use it for conformation if connected to proxy and you are not leaking your external ip by accident.')
 	parser.add_argument('--crawl','-c',action='store_true',help='Crawls whole website and scrapes all the links recursively.')
 	parser.add_argument('--fast',action='store_true',help='In this mode will not capture screenshot of website. And fail count might be more.')
 	parser.add_argument('--slow',action='store_true',help='It this mode crawler will capture (normal and full) screenshot of website.And fail count might be decreased.')
 	parser.add_argument('--scrap','-s',action='store_true',help='Only scrap the website.')
-	parser.add_argument('--file',help='It will fetch link from the text file and only scrap or crawl the website.')
+	parser.add_argument('--file','-f',help='It will fetch link from the text file and only scrap or crawl the website.')
 	parser.add_argument('--verbose','-v',action='store_true',help='See verbose output -> live scraped website details.')
-	parser.add_argument('--must-torrify','-mt',action='store_true',help='It must use through tor socks proxy via default port 9050 for scraping websites.')
+	parser.add_argument('--torrify','-t',action='store_true',help='It must use through tor socks proxy via default port 9050 for scraping websites.')
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -658,11 +637,16 @@ if __name__ == '__main__':
 
 				obj.default_output_folder_location = OUTPUT_SAVING_PATH
 
+				obj.last_session_data_folder = os.path.join(obj.default_output_folder_location,"extra_data")
+				
+				if not os.path.isdir(obj.last_session_data_folder):
+					os.mkdir(obj.last_session_data_folder)
+
 				obj.verbose_output = args.verbose
 
-				obj.must_torrify = args.must_torrify
+				obj.must_torrify = args.torrify
 
-				if 'onion' in url and not args.must_torrify:
+				if 'onion' in url and not args.torrify:
 					print('[+] Entered link is an onion link hence automatically using tor proxy.')
 					obj.must_torrify = True
 
@@ -683,10 +667,7 @@ if __name__ == '__main__':
 				obj.changing_ip_after_number_scarpped_website = CHANGE_IP_AFTER_SCRAPPING_NUMBER_OF_WEBSITES
 
 				obj.changing_ip_after_minutes = CHANGE_IP_AFTER_MINUTES
-
-				obj.load_old_scraped_and_unique_links()
 		
-				obj.get_unique_but_remaining_to_scrap_links()
 		
 				if obj.is_slow_mode:
 					obj.get_driver()
@@ -720,13 +701,13 @@ if __name__ == '__main__':
 					obj.print_ip_desc_table()		
 
 	except KeyboardInterrupt:
-		obj.save_file(file_name='successful_scraped_links.txt',data_list=obj.get_current_scraped_list())
-		obj.save_file(file_name='unique_links.txt',data_list=obj.unique_links)
-		obj.get_unique_but_remaining_to_scrap_links()
+		obj.save_file(file_name='successful_scraped_links.txt',folder_location=obj.last_session_data_folder,data_list=obj.get_current_scraped_list())
+		obj.save_file(file_name='unique_links.txt',folder_location=obj.last_session_data_folder,data_list=obj.unique_links)
+
 		obj.print_live_updates()
 
 		#Saving all data in a csv format for scrapped link.
-		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_output_folder_location,f'All_Scrapped_Data_{round(time.time())}.csv'))
+		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.last_session_data_folder,f'All_Scrapped_Data_{round(time.time())}.csv'))
 			
 		print('\n[-] Quiting ...')
 		exit(0)

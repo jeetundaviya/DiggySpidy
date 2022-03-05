@@ -16,6 +16,9 @@ CRAWL_DEPTH = 2
 '''After crawling MAX_CRAWL_COUNT count it should stop crawling and exit.'''
 MAX_CRAWL_COUNT = 1000
 
+'''MAX_THREAD_COUNT parallel scrapping websites.'''
+MAX_THREAD_COUNT = 10
+
 #Scraping options
 '''
 Use fake user-agent by calling get_random_fake_user_agent() from fake_user_agent.py .

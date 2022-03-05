@@ -10,5 +10,3 @@ signin
 signup
 login
 microsoft
-
-
