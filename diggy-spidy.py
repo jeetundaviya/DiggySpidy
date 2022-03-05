@@ -1,5 +1,7 @@
+from dg_config import *
+from fake_user_agent import FakeUserAgent
+import joblib
 from distutils.log import error
-import re
 import requests as req
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -7,14 +9,12 @@ import json
 import os
 from argparse import ArgumentParser
 from prettytable import PrettyTable
-from fake_useragent import UserAgent
 import time
 from stem import Signal
 from stem.control import Controller
 import sys
 from urllib.parse import urljoin
 from threading import Thread
-import selenium as se
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import base64
@@ -22,17 +22,8 @@ import socket
 from threading import Thread
 import threading
 
-BLUE, RED, WHITE, YELLOW, GREEN, END = '\33[94m', '\033[91m', '\33[97m', '\33[93m', '\033[32m', '\033[0m'
-
-TOR_PROXY = "socks5://127.0.0.1:9050"
-
-CHECK_TOR_URL = 'http://check.torproject.org'
-
-FETCH_IP_DETAILS_URL = 'http://ip-api.com/json'
-
-URL_FOR_CHECKING_INTERNET_CONNECTIVITY = 'example.com'
-
-CONTROL_PORT_PASSWORD = 'p@5s30R6' #Enter your control port password here !
+#Loading Website Category Detection Model
+WEBSITE_CATEGORY_MODEL = joblib.load('./NLP/website_category_detection_model.pkl')
 
 def is_connected_to_internet():
 	try:
@@ -43,8 +34,6 @@ def is_connected_to_internet():
 		print(f'[-] Unable to connect to internet due to {e} !\n[-] Please check your internet connection !')
 		print('[-] Exiting ...')
 		exit(0)	
-	
-	
 	return False
 
 def clear_screen():
@@ -79,7 +68,8 @@ def print_logo():
 
 def get_list_from_file(file):
 		with open(file,'r') as f:
-			return f.readlines()
+			return [link.replace('\n','') for link in f.readlines() if len(link) > 1]
+			# return f.readlines()
 
 class ScrapedLink:
 	def __init__(self,url):
@@ -90,6 +80,7 @@ class ScrapedLink:
 		self.p_tags = 0
 		self.h_tags = 0
 		self.html_text = ''
+		self.website_category = ''
 
 class DiggySpidy:
 
@@ -109,7 +100,7 @@ class DiggySpidy:
 	def load_url_in_driver(self,url,save_to):
 		
 		if self.use_random_fake_user_agent:
-			self.driver_options.add_argument(f'user-agent={UserAgent().random}')
+			self.driver_options.add_argument(f'user-agent={self.fake_user_agent.get_random_fake_user_agent()}')
 		
 		self.driver = webdriver.Chrome(options=self.driver_options)
 		
@@ -250,7 +241,7 @@ class DiggySpidy:
 			url='http://'+url
 		# try:
 		if self.use_random_fake_user_agent:
-			self.session.headers = {'User-Agent': UserAgent().random}
+			self.session.headers = {'User-Agent': self.fake_user_agent.get_random_fake_user_agent()}
 		
 		res = self.session.get(url)
 		
@@ -281,7 +272,7 @@ class DiggySpidy:
 	def save_file(self,file_name,folder_location=None,data=None,data_list=None):
 
 		if folder_location == None:
-			folder_location = self.default_folder_location
+			folder_location = self.default_output_folder_location
 
 		file = os.path.join(folder_location,file_name)
 
@@ -348,7 +339,7 @@ class DiggySpidy:
 				self.ip_changed_last_time = time.time()
 
 		if save_to == None:
-			save_to = self.default_folder_location
+			save_to = self.default_output_folder_location
 
 		self.create_folders(url,save_to) #Empty folder means it was unable to scrap !
 
@@ -392,6 +383,7 @@ class DiggySpidy:
 				html_folder = os.path.join(url_folder_name,'html')
 				links_folder = os.path.join(url_folder_name,'links')
 
+				website_category = WEBSITE_CATEGORY_MODEL.predict([all_text])[0]
 
 				data_dict = {
 				'url':url,
@@ -402,7 +394,8 @@ class DiggySpidy:
 				'headings': heading_tags,
 				'p':p_tags,
 				'a_links':a_links,
-				'img_links':img_links
+				'img_links':img_links,
+				'website_category':website_category
 				}
 
 				current_scraped_url = ScrapedLink(data_dict['url'])
@@ -412,6 +405,7 @@ class DiggySpidy:
 				current_scraped_url.h_tags = data_dict['headings']
 				current_scraped_url.p_tags = data_dict['p']
 				current_scraped_url.html_text = data_dict['text']
+				current_scraped_url.website_category = data_dict['website_category']
 
 				self.successful_scraped_links.append(current_scraped_url)
 
@@ -426,20 +420,20 @@ class DiggySpidy:
 				if self.must_have_words:
 					if self.is_must_have_words_in_data(data=all_text):
 						self.must_have_words_filtered_links.append(url)
-						pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(obj.default_folder_location,'Last_Session_Must_Have_Words_Scrapped_Links_Data.csv'))
+						pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(obj.default_output_folder_location,'Last_Session_Must_Have_Words_Scrapped_Links_Data.csv'))
 
 				#Saving all data in a csv format for scrapped link.
-				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_folder_location,f'Last_Session_All_Scrapped_Links_Data.csv'))
+				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_output_folder_location,f'Last_Session_All_Scrapped_Links_Data.csv'))
 				
 
-				self.save_file(file_name='analysis_table.txt',folder_location=self.default_folder_location,data=self.analysis_table.get_string().encode())
+				self.save_file(file_name='analysis_table.txt',folder_location=self.default_output_folder_location,data=self.analysis_table.get_string().encode())
 				self.save_file(file_name='successful_scraped_links.txt',data_list=self.get_current_scraped_list())
 				self.save_file(file_name='unique_links.txt',data_list=self.unique_links)
 				self.save_file(file_name='must_have_words_links.txt',data_list=self.must_have_words_filtered_links)
 				self.save_file(file_name=only_url+'.json',folder_location=url_folder_name,data=data_json.encode())
 				self.save_file(file_name=only_url+'.html',folder_location=html_folder,data=raw_html.encode())
 				self.save_file(file_name=only_url+'.txt',folder_location=html_folder,data=all_text.encode())
-				self.save_file(file_name='error.txt',folder_location=self.default_folder_location,data_list=self.errors)
+				self.save_file(file_name='error.txt',folder_location=self.default_output_folder_location,data_list=self.errors)
 				self.save_file(file_name='a_links.txt',folder_location=links_folder,data_list=a_links) if len(data_dict['a_links']) > 0 else None
 				self.save_file(file_name='img_links.txt',folder_location=links_folder,data_list=img_links) if len(data_dict['img_links']) > 0 else None
 
@@ -447,7 +441,6 @@ class DiggySpidy:
 		except Exception as e:
 			self.failed_scraped_links.append(url)
 			self.errors.append(f'[-] Unable to scrape {url} [{e}]')
-
 
 	def get_unique_but_remaining_to_scrap_links(self):
 		
@@ -461,7 +454,7 @@ class DiggySpidy:
 		if words:
 			link=link.lower()
 			for word in words:
-				if (word.lower() in link) or (link in word.lower()): 	
+				if (word.lower().replace('\n','') in link) or (link in word.lower()): 	
 					return True
 			return False
 		
@@ -481,6 +474,7 @@ class DiggySpidy:
 		fail_count = f'[+] Fail count : {len(self.failed_scraped_links)}'
 		link_count = f'[+] Links found : {len(self.unique_links)}'
 		latest_website = f'[+] Latest website : {minify_url(self.successful_scraped_links[-1].url)}'
+		website_category = f'[+] Website Category : {self.successful_scraped_links[-1].website_category}'
 
 		if self.verbose_output:
 			clear_screen()
@@ -491,8 +485,12 @@ class DiggySpidy:
 			if self.must_have_words_filtered_links:
 				print(f'[+] Desired links count : {len(self.must_have_words_filtered_links)}',end='\n\n')
 			print(f'[+] Current crawling depth : {self.current_crawl_depth}',end='\n\n')
+			
 			print(f'{latest_website}',end='\n\n')
-			if self.errors:
+			
+			print(f'{website_category}',end='\n\n')
+
+			if self.errors:	
 				print(f'[+] Last error : {self.errors[-1]}',end='\n\n')
 			
 			print(self.analysis_table)
@@ -511,13 +509,13 @@ class DiggySpidy:
 			self.analysis_table.add_row([minify_url(link.url),len(link.a_tags),len(link.img_tags),len(link.p_tags),len(link.h_tags)])
 
 	def load_old_scraped_and_unique_links(self):
-		file = os.path.join(self.default_folder_location,f'successful_scraped_links.txt')
+		file = os.path.join(self.default_output_folder_location,f'successful_scraped_links.txt')
 		if os.path.isfile(file):
 			with open(file,'r') as f:
 				s_links = f.readlines()
 				self.old_unique_links = s_links
 
-		file = os.path.join(self.default_folder_location,f'unique_links.txt')
+		file = os.path.join(self.default_output_folder_location,f'unique_links.txt')
 		if os.path.isfile(file):
 			with open(file,'r') as f:
 				u_links = f.readlines()
@@ -527,7 +525,7 @@ class DiggySpidy:
 
 		if crawl_depth > self.crawl_depth: 
 			#Saving all data in a csv format for scrapped link.
-			# pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_folder_location,f'All_Scrapped_Data_{round(time.time())}.csv'))
+			# pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_output_folder_location,f'All_Scrapped_Data_{round(time.time())}.csv'))
 			return
 
 		self.current_crawl_depth = crawl_depth
@@ -541,7 +539,7 @@ class DiggySpidy:
 			exit(0)
 
 		if save_to == None:
-			save_to = self.default_folder_location
+			save_to = self.default_output_folder_location
 
 		start_data_dic = self.scarp(start_url,save_to)
 		
@@ -583,6 +581,7 @@ class DiggySpidy:
 		self.driver = None
 		self.driver_options = None
 		self.use_random_fake_user_agent = False
+		self.fake_user_agent = FakeUserAgent()
 		self.max_response_time = 30
 		self.tor_proxy = {'http':f'{TOR_PROXY}','https':f'{TOR_PROXY}'}
 		self.session = req.session()
@@ -594,11 +593,9 @@ class DiggySpidy:
 		self.current_crawl_depth = 0
 		self.pause_crawl_duration = 0
 		self.failed_scraped_links = []
-		self.successful_scraped_links = []
-		
+		self.successful_scraped_links = []		
 		self.includes_stop_words = lambda link : (self.are_any_words_in_link(link,self.stopwords_in_link) if self.stopwords_in_link else False)
 		self.includes_must_have_words = lambda link: (self.are_any_words_in_link(link,self.must_have_words_in_link) if self.must_have_words_in_link else True) 
-		
 		self.analysis_table = PrettyTable(field_names=['URL','<a> tag count','<img> tag count','<p> tag count','<hi> heading tags count'])
 		self.unique_links = []
 		self.old_unique_links = []
@@ -606,12 +603,14 @@ class DiggySpidy:
 		self.stopwords_in_link = []
 		self.must_have_words_in_link = []
 		self.must_have_words = []
-		self.default_folder_location = os.getcwd()
+		self.default_output_folder_location = os.getcwd()
 		self.verbose_output = False
 		self.must_have_words_filtered_links = []
 		self.changing_ip_after_number_scarpped_website = 25
 		self.changing_ip_after_minutes = 5
 		self.ip_changed_last_time = time.time()
+		
+
 
 if __name__ == '__main__':
 	
@@ -622,27 +621,12 @@ if __name__ == '__main__':
 	parser.add_argument('--url','-u',default='',help='Enter url to scrape or crawl.')
 	parser.add_argument('--print-ip-details',action='store_true',help='It will dump your current external ip , geo location and other related information.Use it for conformation if connected to proxy and you are not leaking your external ip by accident.')
 	parser.add_argument('--crawl','-c',action='store_true',help='Crawls whole website and scrapes all the links recursively.')
-	parser.add_argument('--crawl-depth','-cd',default=5,help='How much deeper should it crawl.')
 	parser.add_argument('--fast',action='store_true',help='In this mode will not capture screenshot of website. And fail count might be more.')
 	parser.add_argument('--slow',action='store_true',help='It this mode crawler will capture (normal and full) screenshot of website.And fail count might be decreased.')
-	parser.add_argument('--use-random-fake-user-agent',action='store_true',help='It will randomly choose fake User-Agent and copy it in header before sending every get request.')
-	parser.add_argument('--max-response-time','-mrt',default=30,help='For given amount of seconds it should wait for website to load or respond.')
-	parser.add_argument('--pause','-cp',default=0,help='It will start crawling every new website after provided number of seconds.')
-	parser.add_argument('--max-crawl-count',default=1000,help='After crawling this much count it should stop')
 	parser.add_argument('--scrap','-s',action='store_true',help='Only scrap the website.')
-	parser.add_argument('--text-file','-tf',help='It will fetch link from file and only scrap the website.')
-	parser.add_argument('--output','-o',default=os.getcwd(),help='At this location files will be saved.')
+	parser.add_argument('--file',help='It will fetch link from the text file and only scrap or crawl the website.')
 	parser.add_argument('--verbose','-v',action='store_true',help='See verbose output -> live scraped website details.')
 	parser.add_argument('--must-torrify','-mt',action='store_true',help='It must use through tor socks proxy via default port 9050 for scraping websites.')
-	# ['github','facebook','instagram','mailto','torproject','mozilla','firefox','bootstrap','signin','signup','login','microsoft']
-	parser.add_argument('--stopwords-in-link',nargs='*',default=[],help='Enter words which you don\'t want in your scraped links for further scraping.')
-	parser.add_argument('--stopwords-in-link-file',help='Enter path of your stopwords file. You can also enter stop-links to avoid repeatation of scraping.')
-	parser.add_argument('--must-have-words-in-link',nargs='*',help='Enter words which you don\'t want in your scraped links for further scraping.')
-	parser.add_argument('--must-have-words-in-link-file',help='Enter path of your stopwords file. You can also enter stop-links to avoid repeatation of scraping.')
-	parser.add_argument('--must-have-words',nargs='*',help='Enter words which you must to have inside text of scraped links HTML for further scraping.')
-	parser.add_argument('--must-have-words-file',help='Enter path of your stopwords file. You can also enter stop-links to avoid repeatation of scraping.')		
-	parser.add_argument('--changing-ip-after-number-scarpped-website',default=25,help='Change IP after every provided number of scrapped websites.')
-	parser.add_argument('--changing-ip-after-minutes',default=5,help='Change IP after every provided number of minutes.')
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -664,19 +648,17 @@ if __name__ == '__main__':
 
 				obj.is_slow_mode = args.slow
 
-				obj.crawl_depth = int(args.crawl_depth)
+				obj.crawl_depth = CRAWL_DEPTH
 
-				obj.use_random_fake_user_agent = args.use_random_fake_user_agent
+				obj.use_random_fake_user_agent = USE_FAKE_USER_AGENT
 
-				if args.output:
-					if not os.path.isdir(args.output):
-						os.mkdir(args.output)
+				if OUTPUT_SAVING_PATH:
+					if not os.path.isdir(OUTPUT_SAVING_PATH):
+						os.mkdir(OUTPUT_SAVING_PATH)
 
-				obj.default_folder_location = args.output
+				obj.default_output_folder_location = OUTPUT_SAVING_PATH
 
 				obj.verbose_output = args.verbose
-
-				
 
 				obj.must_torrify = args.must_torrify
 
@@ -684,94 +666,23 @@ if __name__ == '__main__':
 					print('[+] Entered link is an onion link hence automatically using tor proxy.')
 					obj.must_torrify = True
 
-				obj.max_crawl_count = int(args.max_crawl_count)
+				obj.max_crawl_count = MAX_CRAWL_COUNT
 
-				obj.max_response_time = int(args.max_response_time)
+				obj.max_response_time = MAX_RESPONSE_TIME
 
-				obj.pause_crawl_duration = int(args.pause)
+				obj.pause_crawl_duration = SCRAPE_PAUSE_AFTER_EVERY_URL
 
-				if args.stopwords_in_link:
-					obj.stopwords_in_link = args.stopwords_in_link
-				else:
-					if args.stopwords_in_link_file:
-						obj.stopwords_in_link = get_list_from_file(args.stopwords_in_link_file)
+				obj.stopwords_in_link = get_list_from_file(STOPWORDS_IN_LINK_FILE)
 
-				if args.must_have_words_in_link:
-					obj.must_have_words_in_link = args.must_have_words_in_link
-				else:
-					if args.must_have_words_in_link_file:
-						obj.must_have_words_in_link = get_list_from_file(args.must_have_words_in_link_file)
+				obj.must_have_words_in_link = get_list_from_file(MUST_HAVE_WORDS_IN_LINK_FILE)
 
+				obj.must_have_words = get_list_from_file(MUST_HAVE_WORDS_IN_WEBSITE_TEXT_FILE)	
 
-				if args.must_have_words:
-					obj.must_have_words = args.must_have_words
-				else:
-					if args.must_have_words_file:
-						obj.must_have_words = get_list_from_file(args.must_have_words_file)	
-
-	#----------------------------------------------[CONTROL PORT CONFIGRATION STEPS AND ITS BASED FEATURES]------------------------------------------
-				'''
-
-				This functionality of changing ip using contoller will only work if you have configured your torrc file !
-
-				[+] Configuration Steps !
-
-				0. Please turn OFF your tor sevice. (ONLY IF STARTED !)
-				[FOR LINUX] command :- sudo service tor stop
-				[FOR WINDOWS] Find tor.exe from your Task Manager and End Task it. 
-
-				1. Make hash-password for your password you want using follow command !
-				command :- tor --hash-password yourpassword (Don't forget to replace 'yourpassword' with your desired password !)
-				output :- 16:45FB27EED43E230E60BB9D1F5D47ECD26B11778226C9BE4C6C038D06B4 (Your output might be different !)
-
-				2. Copy this hash-password (16:45FB...D06B4) to your clipboard or save somewhere.
-
-				3. Open your torrc file.
-
-				Default location for torrc file  :-
-
-				[PATH FOR LINUX] /etc/tor/torrc
-				[PATH FOR WINDOWS]  [installation directory]/Browser/TorBrowser/Data/Tor 
-
-				4. Edit torrc file.
-
-				Find the following lines in torrc file :-
-
-				<Some commented text>
-				#ControlPort 9051
-				<Some commented text>
-				#HashedControlPassword 16:6BE02981163AFB9660DD5E15609A7D5DE979D1DBF9A1044F7112A77CF4
-				<Some commented text>
-
-				Now just uncomment this 2 lines and replace hash-password with your generated hash-password.
-
-				Afterwards it should be looking like :- 
-
-				<Some commented text>
-				ControlPort 9051
-				<Some commented text>
-				HashedControlPassword 16:45FB27EED43E230E60BB9D1F5D47ECD26B11778226C9BE4C6C038D06B4 (Don't forget to change it your own gernerated hash-password.)
-				<Some commented text>
-
-				Now save file and exit.
-
-				5. Now start tor service and fire-up tor and check logs in terminal.
-
-				Once you see the following text in logs :-
-
-				<Some more logs>
-				Jan 26 14:01:28.402 [notice] Opening Control listener on 127.0.0.1:9051
-				Jan 26 14:01:28.402 [notice] Opened Control listener connection (ready) on 127.0.0.1:9051
-				<Some more logs>
-
-				Hurray ! you have successfully configured your tor with control port !
-
-				'''
 				obj.controller_port_password = CONTROL_PORT_PASSWORD
 
-				obj.changing_ip_after_number_scarpped_website = int(args.changing_ip_after_number_scarpped_website)
+				obj.changing_ip_after_number_scarpped_website = CHANGE_IP_AFTER_SCRAPPING_NUMBER_OF_WEBSITES
 
-				obj.changing_ip_after_minutes = int(args.changing_ip_after_minutes)
+				obj.changing_ip_after_minutes = CHANGE_IP_AFTER_MINUTES
 
 				obj.load_old_scraped_and_unique_links()
 		
@@ -784,15 +695,15 @@ if __name__ == '__main__':
 				
 
 	#------------------------------------------------------------------------------------------------------------------------------------------------
-				if args.crawl and args.text_file:
-					with open(args.text_file,'r') as f:
+				if args.crawl and args.file:
+					with open(args.file,'r') as f:
 						links = f.readlines()
 						for link in links:
 							link = link.replace('\n', '')
 							if link:
 								obj.crawl(link)
-				elif args.text_file:
-					with open(args.text_file,'r') as f:
+				elif args.file:
+					with open(args.file,'r') as f:
 						links = f.readlines()
 						for link in links:
 							link = link.replace('\n', '')
@@ -815,7 +726,7 @@ if __name__ == '__main__':
 		obj.print_live_updates()
 
 		#Saving all data in a csv format for scrapped link.
-		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_folder_location,f'All_Scrapped_Data_{round(time.time())}.csv'))
+		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_output_folder_location,f'All_Scrapped_Data_{round(time.time())}.csv'))
 			
 		print('\n[-] Quiting ...')
 		exit(0)
