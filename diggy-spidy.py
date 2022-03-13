@@ -62,7 +62,7 @@ def print_logo():
 
              '\n' + '{}Surface and Dark Web Crawler tool ({}Diggy Spidy{}){}'.format(YELLOW, RED, YELLOW,
                                                                                         BLUE).center(100) +
-             '\n' + 'Made with {}<3{} by: Jeet Undaviya ({}0.<{}){}'.format(RED,YELLOW, RED, YELLOW, BLUE).center(100) +
+             '\n' + 'Made with {}<3{} by: Jeet Undaviya ({}0.<{}) and Dhaiwat Mehta ({}1.<{}) {}'.format(RED,YELLOW, RED, YELLOW,RED, YELLOW, BLUE).center(100) +
              '\n' + 'Version: {}2.0{}'.format(YELLOW, END).center(85)+
              '\n\n' + 'Type python diggy_spidy.py -h or --help for help'.format(YELLOW, END).center(80) + '\n\n')
 
