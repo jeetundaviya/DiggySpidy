@@ -101,7 +101,7 @@ class DiggySpidy:
 		
 		if self.use_random_fake_user_agent:
 			self.driver_options.add_argument(f'user-agent={self.fake_user_agent.get_random_fake_user_agent()}')
-		
+
 		self.driver = webdriver.Chrome(options=self.driver_options)
 		
 		self.driver.maximize_window() # Maximizing window by default
@@ -111,6 +111,8 @@ class DiggySpidy:
 
 		self.driver.implicitly_wait(self.max_response_time) #It will at max wait for 30 seconds for loading website.
 		
+		self.driver.delete_all_cookies()
+
 		self.driver.get(f'{url}')
 
 		self.capture_screenshot(url,save_to)
@@ -315,13 +317,20 @@ class DiggySpidy:
 		only_url = url.replace('http://','').replace('https://','').replace('/', '_')
 		return os.path.join(save_to,only_url)
 	
-	def create_folders(self,url,save_to):
+	def create_url_folder(self,url,save_to):
 
 		url_folder_name = self.get_url_folder(url,save_to)
 		
 		if not os.path.isdir(url_folder_name):			
 			os.mkdir(f'{url_folder_name}')
 
+
+	def create_folders(self,url,save_to):
+
+		url_folder_name = self.get_url_folder(url,save_to)
+		
+		self.create_url_folder(url,save_to)
+		
 		html_folder = os.path.join(url_folder_name,'html')
 		if not os.path.isdir(html_folder):
 			os.mkdir(f'{html_folder}')
@@ -421,20 +430,20 @@ class DiggySpidy:
 				if self.must_have_words:
 					if self.is_must_have_words_in_data(data=all_text):
 						self.must_have_words_filtered_links.append(url)
-						pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(self.last_session_data_folder,'Last_Session_Must_Have_Words_Scrapped_Links_Data.csv'))
+						pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(self.extra_data_folder,'Last_Session_Must_Have_Words_Scrapped_Links_Data.csv'))
 
 				#Saving all data in a csv format for scrapped link.
-				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(self.last_session_data_folder,f'Last_Session_All_Scrapped_Links_Data.csv'))
+				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(self.extra_data_folder,f'Last_Session_All_Scrapped_Links_Data.csv'))
 				
 
-				self.save_file(file_name='analysis_table.txt',folder_location=self.last_session_data_folder,data=self.analysis_table.get_string().encode())
-				self.save_file(file_name='successful_scraped_links.txt',folder_location=self.last_session_data_folder,data_list=self.get_current_scraped_list())
-				self.save_file(file_name='unique_links.txt',folder_location=self.last_session_data_folder,data_list=self.unique_links)
+				self.save_file(file_name='analysis_table.txt',folder_location=self.extra_data_folder,data=self.analysis_table.get_string().encode())
+				self.save_file(file_name='successful_scraped_links.txt',folder_location=self.extra_data_folder,data_list=self.get_current_scraped_list())
+				self.save_file(file_name='unique_links.txt',folder_location=self.extra_data_folder,data_list=self.unique_links)
 				self.save_file(file_name='must_have_words_links.txt',folder_location=url_folder_name,data_list=self.must_have_words_filtered_links)
 				self.save_file(file_name=only_url+'.json',folder_location=url_folder_name,data=data_json.encode())
 				self.save_file(file_name=only_url+'.html',folder_location=html_folder,data=raw_html.encode())
 				self.save_file(file_name=only_url+'.txt',folder_location=html_folder,data=all_text.encode())
-				self.save_file(file_name='error.txt',folder_location=self.last_session_data_folder,data_list=self.errors)
+				self.save_file(file_name='error.txt',folder_location=self.extra_data_folder,data_list=self.errors)
 				self.save_file(file_name='a_links.txt',folder_location=links_folder,data_list=a_links) if len(data_dict['a_links']) > 0 else None
 				self.save_file(file_name='img_links.txt',folder_location=links_folder,data_list=img_links) if len(data_dict['img_links']) > 0 else None
 
@@ -512,8 +521,8 @@ class DiggySpidy:
 		self.current_crawl_depth = crawl_depth
 
 		if len(self.successful_scraped_links) >= self.max_crawl_count:
-			self.save_file(file_name='successful_scraped_links.txt',folder_location=self.last_session_data_folder,data_list=self.get_current_scraped_list())
-			self.save_file(file_name='unique_links.txt',folder_location=self.last_session_data_folder,data_list=self.unique_links)
+			self.save_file(file_name='successful_scraped_links.txt',folder_location=self.extra_data_folder,data_list=self.get_current_scraped_list())
+			self.save_file(file_name='unique_links.txt',folder_location=self.extra_data_folder,data_list=self.unique_links)
 			print('\n[-] Reached to max crawl count!')
 			print('[-] Exiting ...')
 			exit(0)
@@ -582,12 +591,13 @@ class DiggySpidy:
 		self.must_have_words_in_link = []
 		self.must_have_words = []
 		self.default_output_folder_location = os.getcwd()
-		self.last_session_data_folder = os.path.join(self.default_output_folder_location,"extra_data")
+		self.extra_data_folder = os.path.join(self.default_output_folder_location,"extra_data")
 		self.verbose_output = False
 		self.must_have_words_filtered_links = []
 		self.changing_ip_after_number_scarpped_website = 25
 		self.changing_ip_after_minutes = 5
 		self.ip_changed_last_time = time.time()
+		self.base_url = ''
 		
 
 
@@ -623,7 +633,7 @@ if __name__ == '__main__':
 				
 				url = args.url
 
-				obj.current_crawled_url = url
+				obj.base_url = url
 
 				obj.is_slow_mode = args.slow
 
@@ -637,10 +647,12 @@ if __name__ == '__main__':
 
 				obj.default_output_folder_location = OUTPUT_SAVING_PATH
 
-				obj.last_session_data_folder = os.path.join(obj.default_output_folder_location,"extra_data")
+				obj.create_url_folder(url=obj.base_url,save_to=obj.default_output_folder_location)
+
+				obj.extra_data_folder = os.path.join(obj.get_url_folder(url=obj.base_url,save_to=obj.default_output_folder_location),"extra_data")
 				
-				if not os.path.isdir(obj.last_session_data_folder):
-					os.mkdir(obj.last_session_data_folder)
+				if not os.path.isdir(obj.extra_data_folder):
+					os.mkdir(obj.extra_data_folder)
 
 				obj.verbose_output = args.verbose
 
@@ -701,13 +713,13 @@ if __name__ == '__main__':
 					obj.print_ip_desc_table()		
 
 	except KeyboardInterrupt:
-		obj.save_file(file_name='successful_scraped_links.txt',folder_location=obj.last_session_data_folder,data_list=obj.get_current_scraped_list())
-		obj.save_file(file_name='unique_links.txt',folder_location=obj.last_session_data_folder,data_list=obj.unique_links)
+		obj.save_file(file_name='successful_scraped_links.txt',folder_location=obj.extra_data_folder,data_list=obj.get_current_scraped_list())
+		obj.save_file(file_name='unique_links.txt',folder_location=obj.extra_data_folder,data_list=obj.unique_links)
 
 		obj.print_live_updates()
 
 		#Saving all data in a csv format for scrapped link.
-		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.last_session_data_folder,f'All_Scrapped_Data_{round(time.time())}.csv'))
+		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.extra_data_folder,f'All_Scrapped_Data_{round(time.time())}.csv'))
 			
 		print('\n[-] Quiting ...')
 		exit(0)

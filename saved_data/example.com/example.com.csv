@@ -1,5 +1,6 @@
 ,url,folder_location,text,html,title,headings,p,a_links,img_links,website_category
 0,https://example.com,saved_data/example.com,"
+
 Example Domain
 
 
@@ -13,7 +14,10 @@ This domain is for use in illustrative examples in documents. You may use this
     domain in literature without prior coordination or asking for permission.
 More information...
 
-","<html>
+
+
+","<!DOCTYPE html>
+<html>
  <head>
   <title>
    Example Domain
@@ -65,4 +69,5 @@ More information...
    </p>
   </div>
  </body>
-</html>",Example Domain,['Example Domain'],"['This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.', 'More information...']",['https://www.iana.org/domains/example'],[],Business/Corporate
+</html>
+",Example Domain,['Example Domain'],"['This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.', 'More information...']",['https://www.iana.org/domains/example'],[],Business/Corporate
