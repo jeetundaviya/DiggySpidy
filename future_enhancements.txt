@@ -1,0 +1,4 @@
+1. The crawler should not go outside the domain. (add as a feature)
+
+
+

@@ -9,12 +9,21 @@ CHECK_TOR_URL = 'http://check.torproject.org'
 FETCH_IP_DETAILS_URL = 'http://ip-api.com/json'
 URL_FOR_CHECKING_INTERNET_CONNECTIVITY = 'example.com'
 
+# RE Pattens
+URL_DOMAIN_PATTEN = r'://([\w.]*)'
+
+#Verbose Mode
+TABLE_ROW_NUMBER = 25
+
 # Crawling options
+'''Crawler should or should not stay in same domain while crawling.'''
+CRAWL_IN_DOMAIN = True
+
 '''CRAWL_DEPTH decides much deeper you wish to crawl for seed website should it crawl.'''
-CRAWL_DEPTH = 2
+CRAWL_DEPTH = 10
 
 '''After crawling MAX_CRAWL_COUNT count it should stop crawling and exit.'''
-MAX_CRAWL_COUNT = 1000
+MAX_CRAWL_COUNT = 10000
 
 '''MAX_THREAD_COUNT parallel scrapping websites.'''
 MAX_THREAD_COUNT = 10

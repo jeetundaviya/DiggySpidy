@@ -10,3 +10,5 @@ signin
 signup
 login
 microsoft
+duckduckgo
+privacy

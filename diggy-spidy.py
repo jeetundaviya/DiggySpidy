@@ -19,6 +19,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import base64
 import socket
+import re
 from threading import Thread
 import threading
 
@@ -99,6 +100,8 @@ class DiggySpidy:
 	
 	def load_url_in_driver(self,url,save_to):
 		
+		self.driver.quit()
+
 		if self.use_random_fake_user_agent:
 			self.driver_options.add_argument(f'user-agent={self.fake_user_agent.get_random_fake_user_agent()}')
 
@@ -302,6 +305,7 @@ class DiggySpidy:
 		scraped_links_dict['p'] = [link.p_tags for link in self.successful_scraped_links]
 		scraped_links_dict['hi'] = [link.h_tags for link in self.successful_scraped_links]
 		scraped_links_dict['html_text'] = [link.html_text for link in self.successful_scraped_links]
+		scraped_links_dict['website_category'] = [link.website_category for link in self.successful_scraped_links]
 		return scraped_links_dict
 	
 	def purify_links(self,base_url,links):
@@ -323,22 +327,7 @@ class DiggySpidy:
 		
 		if not os.path.isdir(url_folder_name):			
 			os.mkdir(f'{url_folder_name}')
-
-
-	def create_folders(self,url,save_to):
-
-		url_folder_name = self.get_url_folder(url,save_to)
-		
-		self.create_url_folder(url,save_to)
-		
-		html_folder = os.path.join(url_folder_name,'html')
-		if not os.path.isdir(html_folder):
-			os.mkdir(f'{html_folder}')
-
-		links_folder = os.path.join(url_folder_name,'links')
-		if not os.path.isdir(links_folder):
-			os.mkdir(f'{links_folder}')
-
+				
 	def scarp(self,url,save_to=None):
 		# keeping at least some mins duration for changing ip
 		if ((time.time()-self.ip_changed_last_time)/60) > self.changing_ip_after_minutes:
@@ -350,7 +339,7 @@ class DiggySpidy:
 		if save_to == None:
 			save_to = self.default_output_folder_location
 
-		self.create_folders(url,save_to) #Empty folder means it was unable to scrap !
+		self.create_url_folder(url,save_to)
 
 		only_url = url.replace('http://','').replace('https://','').replace('/', '_').replace('?', '_')
 		
@@ -384,14 +373,11 @@ class DiggySpidy:
 					img_tags = soup.find_all('img')
 					img_links = self.purify_links(base_url=url,links=self.extract_links_from_tag_attribute(img_tags, 'src'))	
 				except TypeError:
-
-					pass
+						pass
 
 				all_text = soup.get_text()
 				
 				url_folder_name = self.get_url_folder(url,save_to)
-				html_folder = os.path.join(url_folder_name,'html')
-				links_folder = os.path.join(url_folder_name,'links')
 
 				website_category = WEBSITE_CATEGORY_MODEL.predict([all_text])[0]
 
@@ -410,7 +396,6 @@ class DiggySpidy:
 
 				current_scraped_url = ScrapedLink(data_dict['url'])
 				current_scraped_url.title = data_dict['title']
-				current_scraped_url.img_tags = data_dict['img_links']
 				current_scraped_url.a_tags = data_dict['a_links']
 				current_scraped_url.h_tags = data_dict['headings']
 				current_scraped_url.p_tags = data_dict['p']
@@ -423,34 +408,26 @@ class DiggySpidy:
 
 				self.print_live_updates()
 
-				data_json = json.dumps(data_dict,indent=4)
-
-				pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(url_folder_name,only_url+'.csv'))
+				pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(url_folder_name,only_url+'.csv'),index=False)
 
 				if self.must_have_words:
 					if self.is_must_have_words_in_data(data=all_text):
 						self.must_have_words_filtered_links.append(url)
-						pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(self.extra_data_folder,'Last_Session_Must_Have_Words_Scrapped_Links_Data.csv'))
+						pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(self.extra_data_folder,'Last_Session_Must_Have_Words_Scrapped_Links_Data.csv'),index=False)
 
 				#Saving all data in a csv format for scrapped link.
-				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(self.extra_data_folder,f'Last_Session_All_Scrapped_Links_Data.csv'))
-				
+				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(self.extra_data_folder,f'Last_Session_All_Scrapped_Links_Data.csv'),index=False)
 
-				self.save_file(file_name='analysis_table.txt',folder_location=self.extra_data_folder,data=self.analysis_table.get_string().encode())
 				self.save_file(file_name='successful_scraped_links.txt',folder_location=self.extra_data_folder,data_list=self.get_current_scraped_list())
 				self.save_file(file_name='unique_links.txt',folder_location=self.extra_data_folder,data_list=self.unique_links)
-				self.save_file(file_name='must_have_words_links.txt',folder_location=url_folder_name,data_list=self.must_have_words_filtered_links)
-				self.save_file(file_name=only_url+'.json',folder_location=url_folder_name,data=data_json.encode())
-				self.save_file(file_name=only_url+'.html',folder_location=html_folder,data=raw_html.encode())
-				self.save_file(file_name=only_url+'.txt',folder_location=html_folder,data=all_text.encode())
+				self.save_file(file_name='must_have_words_links.txt',folder_location=self.extra_data_folder,data_list=self.must_have_words_filtered_links)
 				self.save_file(file_name='error.txt',folder_location=self.extra_data_folder,data_list=self.errors)
-				self.save_file(file_name='a_links.txt',folder_location=links_folder,data_list=a_links) if len(data_dict['a_links']) > 0 else None
-				self.save_file(file_name='img_links.txt',folder_location=links_folder,data_list=img_links) if len(data_dict['img_links']) > 0 else None
 
 				return data_dict
 		except Exception as e:
 			self.failed_scraped_links.append(url)
 			self.errors.append(f'[-] Unable to scrape {url} [{e}]')
+			self.save_file(file_name='error.txt',folder_location=self.extra_data_folder,data_list=self.errors)
 
 
 	def are_any_words_in_link(self,link,words):
@@ -506,16 +483,14 @@ class DiggySpidy:
 		
 		minify_url = lambda url: url if len(url) < 50 else url[:50]+'...'
 
-		self.analysis_table = PrettyTable(field_names=['URL','<a> tag count','<img> tag count','<p> tag count','<hi> heading tags count'])
+		self.analysis_table = PrettyTable(field_names=['URL','Links Found','Website Category'])
 			
-		for link in self.successful_scraped_links:
-			self.analysis_table.add_row([minify_url(link.url),len(link.a_tags),len(link.img_tags),len(link.p_tags),len(link.h_tags)])
+		for link in self.successful_scraped_links[-TABLE_ROW_NUMBER:]:
+			self.analysis_table.add_row([minify_url(link.url),len(link.a_tags),link.website_category])
 
 	def crawl(self,start_url,crawl_depth=0,save_to=None):
 
 		if crawl_depth > self.crawl_depth: 
-			#Saving all data in a csv format for scrapped link.
-			# pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.default_output_folder_location,f'All_Scrapped_Data_{round(time.time())}.csv'))
 			return
 
 		self.current_crawl_depth = crawl_depth
@@ -546,8 +521,11 @@ class DiggySpidy:
 						if (link not in self.unique_links):
 							if not self.includes_stop_words(link):
 								if self.includes_must_have_words(link):
+									if CRAWL_IN_DOMAIN:
+										if self.base_url_domain not in link:
+											continue
 									filterd_links.append(link)
-			
+		
 			self.unique_links += filterd_links
 			
 			for link in filterd_links:
@@ -598,6 +576,7 @@ class DiggySpidy:
 		self.changing_ip_after_minutes = 5
 		self.ip_changed_last_time = time.time()
 		self.base_url = ''
+		self.base_url_domain = ''
 		
 
 
@@ -609,10 +588,8 @@ if __name__ == '__main__':
 
 	parser.add_argument('--url','-u',default='',help='Enter url to scrape or crawl.')
 	parser.add_argument('--print-ip-details','-pid',action='store_true',help='It will dump your current external ip , geo location and other related information.Use it for conformation if connected to proxy and you are not leaking your external ip by accident.')
-	parser.add_argument('--crawl','-c',action='store_true',help='Crawls whole website and scrapes all the links recursively.')
-	parser.add_argument('--fast',action='store_true',help='In this mode will not capture screenshot of website. And fail count might be more.')
+	parser.add_argument('--crawl','-c',action='store_true',help='Crawls whole website and scrapes all the links recursively.By default it will only scrape the url.')
 	parser.add_argument('--slow',action='store_true',help='It this mode crawler will capture (normal and full) screenshot of website.And fail count might be decreased.')
-	parser.add_argument('--scrap','-s',action='store_true',help='Only scrap the website.')
 	parser.add_argument('--file','-f',help='It will fetch link from the text file and only scrap or crawl the website.')
 	parser.add_argument('--verbose','-v',action='store_true',help='See verbose output -> live scraped website details.')
 	parser.add_argument('--torrify','-t',action='store_true',help='It must use through tor socks proxy via default port 9050 for scraping websites.')
@@ -626,14 +603,20 @@ if __name__ == '__main__':
 			if len(sys.argv) == 1:
 				print_logo()
 			else:
-
 				print_small_logo()
 
 				obj = DiggySpidy()
 				
+				if args.print_ip_details:
+					print('[+] Your current IP location.\n')
+					obj.print_ip_desc_table()		
+
 				url = args.url
 
 				obj.base_url = url
+
+				if obj.base_url:
+					obj.base_url_domain = re.search(URL_DOMAIN_PATTEN,obj.base_url).group(1)
 
 				obj.is_slow_mode = args.slow
 
@@ -707,11 +690,6 @@ if __name__ == '__main__':
 				else:
 					obj.scarp(url)
 
-
-				if args.print_ip_details:
-					print('[+] Your current IP location.\n')
-					obj.print_ip_desc_table()		
-
 	except KeyboardInterrupt:
 		obj.save_file(file_name='successful_scraped_links.txt',folder_location=obj.extra_data_folder,data_list=obj.get_current_scraped_list())
 		obj.save_file(file_name='unique_links.txt',folder_location=obj.extra_data_folder,data_list=obj.unique_links)
@@ -719,7 +697,7 @@ if __name__ == '__main__':
 		obj.print_live_updates()
 
 		#Saving all data in a csv format for scrapped link.
-		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.extra_data_folder,f'All_Scrapped_Data_{round(time.time())}.csv'))
+		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.extra_data_folder,f'All_Scrapped_Data_{round(time.time())}.csv'),index=False)
 			
 		print('\n[-] Quiting ...')
 		exit(0)
