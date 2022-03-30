@@ -63,7 +63,7 @@ def print_logo():
 
              '\n' + '{}Surface and Dark Web Crawler tool ({}Diggy Spidy{}){}'.format(YELLOW, RED, YELLOW,
                                                                                         BLUE).center(100) +
-             '\n' + 'Made with {}<3{} by: Jeet Undaviya ({}0.<{}) and Dhaiwat Mehta ({}1.<{}) {}'.format(RED,YELLOW, RED, YELLOW,RED, YELLOW, BLUE).center(100) +
+             '\n' + 'Made with {}<3{} by: Jeet Undaviya ({}0.<{}) and Dhaiwat Mehta ({}1.<{}) {}'.format(RED,YELLOW, RED, YELLOW,RED, YELLOW, BLUE).center(115) +
              '\n' + 'Version: {}2.0{}'.format(YELLOW, END).center(85)+
              '\n\n' + 'Type python diggy_spidy.py -h or --help for help'.format(YELLOW, END).center(80) + '\n\n')
 
@@ -122,24 +122,23 @@ class DiggySpidy:
 
 		return self.driver.page_source
 		
-	
 	def capture_screenshot(self,url,save_to):
 
 		url_folder = self.get_url_folder(url,save_to)
 
-		screenshot_folder = os.path.join(url_folder,'screenshots')
+		self.screenshot_folder = os.path.join(url_folder,'screenshots')
 
-		if not os.path.isdir(screenshot_folder):
-			os.mkdir(f'{screenshot_folder}')
+		if not os.path.isdir(self.screenshot_folder):
+			os.mkdir(f'{self.screenshot_folder}')
 
-		self.driver.get_screenshot_as_file(os.path.join(screenshot_folder,'screenshot.png'))
+		self.driver.get_screenshot_as_file(os.path.join(self.screenshot_folder,'screenshot.png'))
 
 		#Maxmizing window size to scrollable content to take full screenshot !
 		window_size = lambda X: self.driver.execute_script('return document.body.parentNode.scroll'+X)
 		self.driver.set_window_size(window_size('Width'),window_size('Height'))
-		self.driver.get_screenshot_as_file(os.path.join(screenshot_folder,'screenshot_full.png'))
+		self.driver.get_screenshot_as_file(os.path.join(self.screenshot_folder,'screenshot_full.png'))
 
-		with open(os.path.join(screenshot_folder,'full_page.pdf'),'wb') as f:
+		with open(os.path.join(self.screenshot_folder,'full_page.pdf'),'wb') as f:
 			b64_encoded_str = self.driver.print_page()
 			f.write(base64.b64decode(b64_encoded_str))
 
@@ -248,7 +247,7 @@ class DiggySpidy:
 		if self.use_random_fake_user_agent:
 			self.session.headers = {'User-Agent': self.fake_user_agent.get_random_fake_user_agent()}
 		
-		res = self.session.get(url)
+		res = self.session.get(url,timeout=self.max_response_time)
 		
 		if res.status_code == 200:
 			return res.content
@@ -338,18 +337,17 @@ class DiggySpidy:
 
 		if save_to == None:
 			save_to = self.default_output_folder_location
-
+		
 		self.create_url_folder(url,save_to)
 
 		only_url = url.replace('http://','').replace('https://','').replace('/', '_').replace('?', '_')
-		
+
 		try:
 			if not self.is_slow_mode:
 				html_content = self.get_res(url)
 			else:
 				html_content = self.load_url_in_driver(url,save_to)
 			
-
 			if html_content:
 
 				html = html_content
@@ -362,7 +360,12 @@ class DiggySpidy:
 				except AttributeError as e:
 					title_text = ''
 
-				heading_tags = p_tags = a_tags = a_links = img_tags = img_links = []	
+				heading_tags = []
+				p_tags = []
+				a_tags = []
+				a_links = []
+				img_tags = []
+				img_links = []	
 
 				try:
 					h_lists = [soup.find_all('h'+str(i)) for i in range(1,7)] #Recursive list including all html headings.
@@ -411,9 +414,8 @@ class DiggySpidy:
 				pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(url_folder_name,only_url+'.csv'),index=False)
 
 				if self.must_have_words:
-					if self.is_must_have_words_in_data(data=all_text):
+					if self.is_must_have_words_in_data(only_url=only_url,data=all_text):
 						self.must_have_words_filtered_links.append(url)
-						pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(self.extra_data_folder,'Last_Session_Must_Have_Words_Scrapped_Links_Data.csv'),index=False)
 
 				#Saving all data in a csv format for scrapped link.
 				pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(self.extra_data_folder,f'Last_Session_All_Scrapped_Links_Data.csv'),index=False)
@@ -426,9 +428,12 @@ class DiggySpidy:
 				return data_dict
 		except Exception as e:
 			self.failed_scraped_links.append(url)
+
+			if len(os.listdir(self.get_url_folder(url,save_to))) == 0: #Deleting folder if empty !
+				os.rmdir(self.get_url_folder(url,save_to))
+
 			self.errors.append(f'[-] Unable to scrape {url} [{e}]')
 			self.save_file(file_name='error.txt',folder_location=self.extra_data_folder,data_list=self.errors)
-
 
 	def are_any_words_in_link(self,link,words):
 		if words:
@@ -438,12 +443,23 @@ class DiggySpidy:
 					return True
 			return False
 		
-	def is_must_have_words_in_data(self,data,must_have_words=None):
+	def is_must_have_words_in_data(self,only_url,data,must_have_words=None):
 		if not must_have_words:
 			must_have_words = self.must_have_words
 		data=data.lower()
 		for word in must_have_words:
-			if (word.lower() in data) or (data in word.lower()): 
+			if (word.lower() in data) or (data in word.lower()):  
+				try:
+					if self.is_slow_mode and self.screenshot_folder:
+						with open(os.path.join(self.screenshot_folder,'screenshot_full.png'),'rb') as f:
+							screenshot = f.read()
+							if not os.path.isdir(os.path.join(self.extra_data_folder,'must_have_words_proof')):
+								os.makedirs(os.path.join(self.extra_data_folder,'must_have_words_proof'))
+							
+							with open(os.path.join(os.path.join(self.extra_data_folder,'must_have_words_proof'),f'{word}_found_in_{only_url.replace("/","_")}.png'),'wb') as f2:
+								f2.write(screenshot)
+				except Exception as e:
+					self.errors.append(f'[-] Unable to save screenshot of {only_url} for word {word} due to {e} error.')
 				return True
 		return False	
 
@@ -541,45 +557,63 @@ class DiggySpidy:
 					self.failed_scraped_links.append(start_url)	
 
 	def __init__(self):
-		self.errors = []
+
+		#base url
+		self.base_url = ''
+		self.base_url_domain = ''
+
+		# options
+		self.is_slow_mode = False
 		self.must_torrify = False
-		self.driver = None
-		self.driver_options = None
 		self.use_random_fake_user_agent = False
 		self.fake_user_agent = FakeUserAgent()
 		self.max_response_time = 30
 		self.tor_proxy = {'http':f'{TOR_PROXY}','https':f'{TOR_PROXY}'}
-		self.session = req.session()
-		self.is_slow_mode = False
-		self.controller_port_password = None 
-		self.changing_ip_after_minutes = 25
-		self.max_crawl_count = 1000
+		
+		#Session and drivers
+		self.session = req.session()		
+		self.driver = None
+		self.driver_options = None
+		self.screenshot_folder = ''
+
+		#crawling settings
 		self.crawl_depth = 5
 		self.current_crawl_depth = 0
+
+		#crawling time settings
+		self.changing_ip_after_minutes = 25
+		self.max_crawl_count = 1000
 		self.pause_crawl_duration = 0
-		self.failed_scraped_links = []
-		self.successful_scraped_links = []		
-		self.includes_stop_words = lambda link : (self.are_any_words_in_link(link,self.stopwords_in_link) if self.stopwords_in_link else False)
-		self.includes_must_have_words = lambda link: (self.are_any_words_in_link(link,self.must_have_words_in_link) if self.must_have_words_in_link else True) 
-		self.analysis_table = PrettyTable(field_names=['URL','<a> tag count','<img> tag count','<p> tag count','<hi> heading tags count'])
-		self.unique_links = []
-		self.old_unique_links = []
-		self.old_successful_scraped_links = []
-		self.stopwords_in_link = []
-		self.must_have_words_in_link = []
-		self.must_have_words = []
-		self.default_output_folder_location = os.getcwd()
-		self.extra_data_folder = os.path.join(self.default_output_folder_location,"extra_data")
-		self.verbose_output = False
-		self.must_have_words_filtered_links = []
 		self.changing_ip_after_number_scarpped_website = 25
 		self.changing_ip_after_minutes = 5
 		self.ip_changed_last_time = time.time()
-		self.base_url = ''
-		self.base_url_domain = ''
 		
+		#for tor
+		self.controller_port_password = None 
+		
+		#filtering links options
+		self.includes_stop_words = lambda link : (self.are_any_words_in_link(link,self.stopwords_in_link) if self.stopwords_in_link else False)
+		self.includes_must_have_words = lambda link: (self.are_any_words_in_link(link,self.must_have_words_in_link) if self.must_have_words_in_link else True) 
+		self.stopwords_in_link = []
+		self.must_have_words_in_link = []
+		self.must_have_words = []
+		self.must_have_words_filtered_links = []
+		
+		#progress keeping options
+		self.errors = []
+		self.failed_scraped_links = []
+		self.successful_scraped_links = []		
+		self.unique_links = []
+		
+		#verbose table settings
+		self.analysis_table = PrettyTable()
+		self.verbose_output = False
 
+		#folder settings
+		self.default_output_folder_location = os.getcwd()
+		self.extra_data_folder = os.path.join(self.default_output_folder_location,"extra_data")
 
+#Main Driver Code
 if __name__ == '__main__':
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -669,7 +703,6 @@ if __name__ == '__main__':
 				else:
 					obj.get_session()
 				
-
 	#------------------------------------------------------------------------------------------------------------------------------------------------
 				if args.crawl and args.file:
 					with open(args.file,'r') as f:
@@ -689,7 +722,6 @@ if __name__ == '__main__':
 					obj.crawl(url)
 				else:
 					obj.scarp(url)
-
 	except KeyboardInterrupt:
 		obj.save_file(file_name='successful_scraped_links.txt',folder_location=obj.extra_data_folder,data_list=obj.get_current_scraped_list())
 		obj.save_file(file_name='unique_links.txt',folder_location=obj.extra_data_folder,data_list=obj.unique_links)
@@ -699,5 +731,9 @@ if __name__ == '__main__':
 		#Saving all data in a csv format for scrapped link.
 		pd.DataFrame().from_dict(obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(obj.extra_data_folder,f'All_Scrapped_Data_{round(time.time())}.csv'),index=False)
 			
+		print('\n[-] Quiting ...')
+		exit(0)
+	except Exception as e:
+		print(f'[-] Something went wrong due to {e}.')
 		print('\n[-] Quiting ...')
 		exit(0)

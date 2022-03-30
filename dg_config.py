@@ -20,7 +20,7 @@ TABLE_ROW_NUMBER = 25
 CRAWL_IN_DOMAIN = True
 
 '''CRAWL_DEPTH decides much deeper you wish to crawl for seed website should it crawl.'''
-CRAWL_DEPTH = 10
+CRAWL_DEPTH = 3
 
 '''After crawling MAX_CRAWL_COUNT count it should stop crawling and exit.'''
 MAX_CRAWL_COUNT = 10000

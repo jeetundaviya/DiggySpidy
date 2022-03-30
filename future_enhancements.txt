@@ -1,4 +1,2 @@
-1. The crawler should not go outside the domain. (add as a feature)
-
-
-
+1. By passing capta (By passing blocking of websites).
+2. Keyword based website detection and save its screenshot seperately.

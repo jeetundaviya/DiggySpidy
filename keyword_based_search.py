@@ -1,11 +1,12 @@
 from KeywordBasedSearch.SearchEngines import *
 from dg_config import *
-from fake_user_agent import FakeUserAgent
+from fake_user_agent import LATEST_CHROME_USERAGENT
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import *
+from googlesearch import search
 
 from bs4 import BeautifulSoup
 
@@ -14,10 +15,17 @@ import re
 
 option = Options()
 option.add_argument(f'-headless')
-option.add_argument(f'user-agent={FakeUserAgent().get_random_fake_user_agent()}')
+option.add_argument(f'user-agent={LATEST_CHROME_USERAGENT}')
 option.add_argument(f'--proxy-server={TOR_PROXY}')
 
 driver = Chrome(options=option)
+
+def search_by_google(keywords):
+    print(f'[+] Getting result for {keywords} from Google.')
+    results = [result for result in search(keywords)]
+    pd.DataFrame({'results':results}).to_csv(f'{keywords}_google.csv',index=False)
+    print(f'[-] Fetched {len(results)} unique results fetch by Google')
+
 
 def keywords_to_url_parameters(keywords):
     return keywords.replace(' ','+')
@@ -181,24 +189,24 @@ def search_by_torgle(keywords):
     
     print(f'[+] Getting result for {keywords} from Torgle.')
 
-    driver.get(f'{DW_TOR66_URL}{params}')
+    driver.get(f'{DW_TORGLE_URL}{params}')
 
     set_max_scroll_size()
 
     page_htmls = [driver.page_source]
 
     # if current page number == total pages it breaks of from while loop ! 
-    while driver.find_element(By.XPATH,'/html/body/center[3]/div/span/strong').text not in driver.find_element(By.XPATH,'/html/body/center[9]/div/span/text()[2]').text:
-        try:
-            page_number = driver.find_element(By.XPATH,'/html/body/center[3]/div/span/strong').text
-            print(f'[+] Fetching more links from {page_number} page.')
-            driver.find_element(By.XPATH,'/html/body/center[9]/div/a[3]').click() # Clicking next_page>> for visiting next page
-            page_htmls.append(driver.page_source)
-        except NoSuchElementException:
-            continue
-        except KeyboardInterrupt:
-            print('[+] Stopping to fetch further more results.')
-            break
+    # while driver.find_element(By.XPATH,'/html/body/center[3]/div/span/strong').text not in driver.find_element(By.XPATH,'/html/body/center[9]/div/span/text()[2]').text:
+    #     try:
+    #         page_number = driver.find_element(By.XPATH,'/html/body/center[3]/div/span/strong').text
+    #         print(f'[+] Fetching more links from {page_number} page.')
+    #         driver.find_element(By.XPATH,'/html/body/center[9]/div/a[3]').click() # Clicking next_page>> for visiting next page
+    #         page_htmls.append(driver.page_source)
+    #     except NoSuchElementException:
+    #         continue
+    #     except KeyboardInterrupt:
+    #         print('[+] Stopping to fetch further more results.')
+    #         break
 
     a_tags = []
     a_titles =[]
@@ -214,7 +222,7 @@ def search_by_torgle(keywords):
                 try:
                     if table.find('a') and len(table.find_all('b')) > 1:
                         a = table.find('a')
-                        a_title = table.find_all('b')[0]
+                        a_title = table.find_all('b')[0].get_text().strip()
                         a_links.append(a["href"]) 
                         a_titles.append(a_title)
                 except:
@@ -224,6 +232,4 @@ def search_by_torgle(keywords):
     print(f'[-] Fetched {len(a_links)} unique results fetch by Torgle')
     driver.quit()
 
-
-# search_by_torgle('india')
-search_by_tor66('india')
+search_by_duck_duck_go('jeet undaviya')

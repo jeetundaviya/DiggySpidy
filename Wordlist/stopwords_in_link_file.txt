@@ -12,3 +12,5 @@ login
 microsoft
 duckduckgo
 privacy
+.pdf
+.jpg

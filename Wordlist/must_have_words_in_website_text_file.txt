@@ -1,0 +1,5 @@
+login
+register
+signin
+signup
+captcha
