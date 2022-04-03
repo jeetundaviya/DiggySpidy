@@ -14,7 +14,7 @@ import pandas as pd
 import re
 
 option = Options()
-option.add_argument(f'-headless')
+# option.add_argument(f'-headless')
 option.add_argument(f'user-agent={LATEST_CHROME_USERAGENT}')
 option.add_argument(f'--proxy-server={TOR_PROXY}')
 
@@ -63,7 +63,7 @@ def search_by_ahmia(keywords):
 
     pd.DataFrame({'a_title':a_titles,'a_links':a_links,'filtered_links':filtered_links}).to_csv(f'{keywords.replace("+","_")}_ahmia.csv',index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Ahmia')
-    driver.quit()
+    
 
 def search_by_duck_duck_go(keywords):
 
@@ -104,7 +104,7 @@ def search_by_duck_duck_go(keywords):
 
     print(f'[-] Fetched {len(a_links)} unique results fetch by DuckDuckgo')
 
-    driver.quit()
+    
 
 def search_by_deep_search(keywords):
 
@@ -134,7 +134,7 @@ def search_by_deep_search(keywords):
             
     pd.DataFrame({'a_title':a_titles,'a_links':a_links,'filtered_links':filtered_links}).to_csv(f'{keywords.replace("+","_")}_deep_search.csv',index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Deep Search')
-    driver.quit()
+    
 
 def search_by_tor66(keywords):
 
@@ -181,7 +181,7 @@ def search_by_tor66(keywords):
             
     pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(f'{keywords.replace("+","_")}_tor66.csv',index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Tor66')
-    driver.quit()
+    
 
 def search_by_torgle(keywords):
 
@@ -230,6 +230,31 @@ def search_by_torgle(keywords):
             
     pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(f'{keywords.replace("+","_")}_torgle.csv',index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Torgle')
-    driver.quit()
+    
 
-search_by_duck_duck_go('jeet undaviya')
+try:
+    search_by_tor66('modi')
+except Exception as e:
+    print(f'[-] Something went wrong on {e}')
+        
+try:
+    search_by_deep_search('modi')
+except Exception as e:
+    print(f'[-] Something went wrong on {e}')
+
+try:
+    search_by_duck_duck_go('modi')
+except Exception as e:
+    print(f'[-] Something went wrong on {e}')
+
+try:
+    search_by_ahmia('modi')
+except Exception as e:
+    print(f'[-] Something went wrong on {e}')
+
+try:
+    search_by_torgle('modi')
+except Exception as e:
+    print(f'[-] Something went wrong on {e}')
+    
+driver.quit()

@@ -1,5 +1,1 @@
-login
-register
-signin
-signup
-captcha
+modi

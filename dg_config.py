@@ -17,7 +17,7 @@ TABLE_ROW_NUMBER = 25
 
 # Crawling options
 '''Crawler should or should not stay in same domain while crawling.'''
-CRAWL_IN_DOMAIN = True
+CRAWL_IN_DOMAIN = False
 
 '''CRAWL_DEPTH decides much deeper you wish to crawl for seed website should it crawl.'''
 CRAWL_DEPTH = 3
