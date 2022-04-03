@@ -1,20 +1,20 @@
 <h1><b>Diggy Spidy</b></h1>
 
-<h3>[Q] What is Diggy Spidy ?</h3>
+<h3><b>[Q] What is Diggy Spidy ?</b></h3>
 
-<h3>[A] Diggy Spidy is a Surface and a Dark Web Crawler.</h3>
+<h3><b>[A] Diggy Spidy is a Surface and a Dark Web Crawler.</b></h3>
 
-<h5>[*] Features :-</h5>
+<h5><b>[*] Features :-</b></h5>
 
--> Slow and Fast Mode.
--> Takes Full-Screenshots of website for future analysis.
--> Website Domain Specific Crawling.
--> Crawling Depth Control.
--> Keyword Based Filter for the textual data found on the website. (Keyword matches found from the text content found on the website)
--> Stopwords and Must have words filter in the link.
--> Multiple List Crawling (Parallel Crawling) 
+-> Slow and Fast Mode.<br>
+-> Takes Full-Screenshots of website for future analysis.<br>
+-> Website Domain Specific Crawling.<br>
+-> Crawling Depth Control.<br>
+-> Keyword Based Filter for the textual data found on the website. (Keyword matches found from the text content found on the website)<br>
+-> Stopwords and Must have words filter in the link.<br>
+-> Multiple List Crawling (Parallel Crawling)<br>
 
-<h5>[*] Special:-</h5>
+<h5><b>[*] Special:-</b></h5>
 
 1) Keyword Based Fetching Links :-
 
@@ -22,6 +22,6 @@
 
 2) Locating Found Text in Screenshots and Highlighting it for the keyword filter for matches found ! (Under Development)
 	
-<h5>[*] Our Goal :-</h5>
+<h5><b>[*] Our Goal :-</b></h5>
 
 -> We aim to develop a cyber-surveillance and cyber-threat-intelligence model from our updated indexed dataset and also to built an alert system if any of the requested target is about to compromise from our model.
