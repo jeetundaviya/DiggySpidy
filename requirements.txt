@@ -33,3 +33,8 @@ urllib3
 wcwidth
 wsproto
 zope.interface
+easyocr
+cv2
+google
+joblib
+sklearn

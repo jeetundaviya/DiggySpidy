@@ -22,6 +22,7 @@ import socket
 import re
 from threading import Thread
 import threading
+from keyword_box_in_image import KeywordBox
 
 #Loading Website Category Detection Model
 WEBSITE_CATEGORY_MODEL = joblib.load('./NLP/website_category_detection_model.pkl')
@@ -414,7 +415,7 @@ class DiggySpidy:
 				pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(url_folder_name,only_url+'.csv'),index=False)
 
 				if self.must_have_words:
-					if self.is_must_have_words_in_data(only_url=only_url,data=all_text):
+					if self.is_must_have_words_in_textual_data(only_url=only_url,data=all_text):
 						self.must_have_words_filtered_links.append(url)
 
 				#Saving all data in a csv format for scrapped link.
@@ -443,7 +444,7 @@ class DiggySpidy:
 					return True
 			return False
 		
-	def is_must_have_words_in_data(self,only_url,data,must_have_words=None):
+	def is_must_have_words_in_textual_data(self,only_url,data,must_have_words=None):
 		if not must_have_words:
 			must_have_words = self.must_have_words
 		data=data.lower()
@@ -453,13 +454,26 @@ class DiggySpidy:
 					if self.is_slow_mode and self.screenshot_folder:
 						with open(os.path.join(self.screenshot_folder,'screenshot_full.png'),'rb') as f:
 							screenshot = f.read()
-							if not os.path.isdir(os.path.join(self.extra_data_folder,'must_have_words_proof')):
-								os.makedirs(os.path.join(self.extra_data_folder,'must_have_words_proof'))
 							
-							with open(os.path.join(os.path.join(self.extra_data_folder,'must_have_words_proof'),f'{word}_found_in_{only_url.replace("/","_")}.png'),'wb') as f2:
+							must_have_words_proof_name = f'{word}_found_in_{only_url.replace("/","_")}.png'
+
+							must_have_words_proof_folder = os.path.join(self.extra_data_folder,'must_have_words_proof')
+
+							if not os.path.isdir(must_have_words_proof_folder):
+								os.makedirs(must_have_words_proof_folder)
+							
+
+							with open(os.path.join(must_have_words_proof_folder,must_have_words_proof_name),'wb') as f2:
 								f2.write(screenshot)
+
+							#KeywordBox(input_image=,output_image=,keyword=,all_matches=)
+							Thread(target=KeywordBox,args=[os.path.join(must_have_words_proof_folder,must_have_words_proof_name),os.path.join(must_have_words_proof_folder,must_have_words_proof_name),word,True]).start()
+							
+
+				
 				except Exception as e:
 					self.errors.append(f'[-] Unable to save screenshot of {only_url} for word {word} due to {e} error.')
+				
 				return True
 		return False	
 

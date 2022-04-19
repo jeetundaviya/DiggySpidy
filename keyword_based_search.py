@@ -232,28 +232,30 @@ def search_by_torgle(keywords):
     print(f'[-] Fetched {len(a_links)} unique results fetch by Torgle')
     
 
+Keyword = input('Enter keywords for searching : ')
+
 try:
-    search_by_tor66('modi')
+    search_by_tor66(Keyword)
 except Exception as e:
     print(f'[-] Something went wrong on {e}')
         
 try:
-    search_by_deep_search('modi')
+    search_by_deep_search(Keyword)
 except Exception as e:
     print(f'[-] Something went wrong on {e}')
 
 try:
-    search_by_duck_duck_go('modi')
+    search_by_duck_duck_go(Keyword)
 except Exception as e:
     print(f'[-] Something went wrong on {e}')
 
 try:
-    search_by_ahmia('modi')
+    search_by_ahmia(Keyword)
 except Exception as e:
     print(f'[-] Something went wrong on {e}')
 
 try:
-    search_by_torgle('modi')
+    search_by_torgle(Keyword)
 except Exception as e:
     print(f'[-] Something went wrong on {e}')
     
