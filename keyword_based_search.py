@@ -1,3 +1,4 @@
+import os
 from KeywordBasedSearch.SearchEngines import *
 from dg_config import *
 from fake_user_agent import LATEST_CHROME_USERAGENT
@@ -13,6 +14,11 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import re
 
+SEARCH_ENGINE_RESULTS_SAVE_TO_PATH = os.path.join(OUTPUT_SAVING_PATH,'search_engines_results') 
+
+if not os.path.isdir(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH):
+    os.makedirs(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH)
+
 all_links = []
 
 option = Options()
@@ -25,9 +31,8 @@ driver = Chrome(options=option)
 def search_by_google(keywords):
     print(f'[+] Getting result for {keywords} from Google.')
     results = [result for result in search(keywords)]
-    pd.DataFrame({'results':results}).to_csv(f'{keywords}_google.csv',index=False)
+    pd.DataFrame({'results':results}).to_csv(os.path.join(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH,f'{keywords}_google.csv'),index=False)
     print(f'[-] Fetched {len(results)} unique results fetch by Google')
-
 
 def keywords_to_url_parameters(keywords):
     return keywords.replace(' ','+')
@@ -63,12 +68,11 @@ def search_by_ahmia(keywords):
             filtered_links.append(re.findall(filter_patten,a_links[-1])[-1])
             a_titles.append(a.text)
 
-    pd.DataFrame({'a_title':a_titles,'a_links':a_links,'filtered_links':filtered_links}).to_csv(f'{keywords.replace("+","_")}_ahmia.csv',index=False)
+    pd.DataFrame({'a_title':a_titles,'a_links':a_links,'filtered_links':filtered_links}).to_csv(os.path.join(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH,f'{keywords.replace("+","_")}_ahmia.csv'),index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Ahmia')
 
     return filtered_links
     
-
 def search_by_duck_duck_go(keywords):
 
     params = keywords_to_url_parameters(keywords)
@@ -104,7 +108,7 @@ def search_by_duck_duck_go(keywords):
         except:
             continue
 
-    pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(f'{keywords.replace("+","_")}_duckduckgo.csv',index=False)
+    pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(os.path.join(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH,f'{keywords.replace("+","_")}_duckduckgo.csv'),index=False)
 
     print(f'[-] Fetched {len(a_links)} unique results fetch by DuckDuckgo')
 
@@ -136,7 +140,7 @@ def search_by_deep_search(keywords):
             a_titles.append(a.text)
             filtered_links.append(re.findall(filter_patten,a_links[-1])[-1])
             
-    pd.DataFrame({'a_title':a_titles,'a_links':a_links,'filtered_links':filtered_links}).to_csv(f'{keywords.replace("+","_")}_deep_search.csv',index=False)
+    pd.DataFrame({'a_title':a_titles,'a_links':a_links,'filtered_links':filtered_links}).to_csv(os.path.join(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH,f'{keywords.replace("+","_")}_deep_search.csv'),index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Deep Search')
     
     return filtered_links
@@ -184,7 +188,7 @@ def search_by_tor66(keywords):
                 except:
                     continue
             
-    pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(f'{keywords.replace("+","_")}_tor66.csv',index=False)
+    pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(os.path.join(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH,f'{keywords.replace("+","_")}_tor66.csv'),index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Tor66')
     
     return a_links
@@ -234,7 +238,7 @@ def search_by_torgle(keywords):
                 except:
                     continue
             
-    pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(f'{keywords.replace("+","_")}_torgle.csv',index=False)
+    pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(os.path.join(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH, f'{keywords.replace("+","_")}_torgle.csv'),index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Torgle')
     
     return a_links
@@ -262,10 +266,12 @@ def all_search(Keyword):
     except Exception as e:
         print(f'[-] Something went wrong on {e}')
 
-    # try:
-    #     all_links = search_by_duck_duck_go(Keyword)
-    # except Exception as e:
-    #     print(f'[-] Something went wrong on {e}')
+    try:
+        links = search_by_duck_duck_go(Keyword)
+        if links:
+            all_links += links
+    except Exception as e:
+        print(f'[-] Something went wrong on {e}')
 
     try:
         links = search_by_ahmia(Keyword)
@@ -291,7 +297,7 @@ def all_search(Keyword):
 
     unique_links = [link+'\n' for link in unique_links]
 
-    with open(f'all_links_for_{Keyword}.txt','w') as f:
+    with open(os.path.join(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH,f'all_links_for_{Keyword}.txt'),'w') as f:
         f.writelines(unique_links)
     
 all_search(Keyword)
