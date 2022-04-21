@@ -13,8 +13,10 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import re
 
+all_links = []
+
 option = Options()
-# option.add_argument(f'-headless')
+option.add_argument(f'-headless')
 option.add_argument(f'user-agent={LATEST_CHROME_USERAGENT}')
 option.add_argument(f'--proxy-server={TOR_PROXY}')
 
@@ -63,6 +65,8 @@ def search_by_ahmia(keywords):
 
     pd.DataFrame({'a_title':a_titles,'a_links':a_links,'filtered_links':filtered_links}).to_csv(f'{keywords.replace("+","_")}_ahmia.csv',index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Ahmia')
+
+    return filtered_links
     
 
 def search_by_duck_duck_go(keywords):
@@ -104,8 +108,8 @@ def search_by_duck_duck_go(keywords):
 
     print(f'[-] Fetched {len(a_links)} unique results fetch by DuckDuckgo')
 
-    
-
+    return a_links
+   
 def search_by_deep_search(keywords):
 
     params = keywords_to_url_parameters(keywords)
@@ -135,6 +139,7 @@ def search_by_deep_search(keywords):
     pd.DataFrame({'a_title':a_titles,'a_links':a_links,'filtered_links':filtered_links}).to_csv(f'{keywords.replace("+","_")}_deep_search.csv',index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Deep Search')
     
+    return filtered_links
 
 def search_by_tor66(keywords):
 
@@ -182,6 +187,7 @@ def search_by_tor66(keywords):
     pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(f'{keywords.replace("+","_")}_tor66.csv',index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Tor66')
     
+    return a_links
 
 def search_by_torgle(keywords):
 
@@ -231,32 +237,62 @@ def search_by_torgle(keywords):
     pd.DataFrame({'a_title':a_titles,'a_links':a_links}).to_csv(f'{keywords.replace("+","_")}_torgle.csv',index=False)
     print(f'[-] Fetched {len(a_links)} unique results fetch by Torgle')
     
+    return a_links
 
 Keyword = input('Enter keywords for searching : ')
 
-try:
-    search_by_tor66(Keyword)
-except Exception as e:
-    print(f'[-] Something went wrong on {e}')
-        
-try:
-    search_by_deep_search(Keyword)
-except Exception as e:
-    print(f'[-] Something went wrong on {e}')
-
-try:
-    search_by_duck_duck_go(Keyword)
-except Exception as e:
-    print(f'[-] Something went wrong on {e}')
-
-try:
-    search_by_ahmia(Keyword)
-except Exception as e:
-    print(f'[-] Something went wrong on {e}')
-
-try:
-    search_by_torgle(Keyword)
-except Exception as e:
-    print(f'[-] Something went wrong on {e}')
+def all_search(Keyword):
     
+    all_links = []
+
+    try:
+        links = search_by_tor66(Keyword)
+
+        if links:
+            all_links += links
+        print(all_links)
+    except Exception as e:
+        print(f'[-] Something went wrong on {e}')
+            
+    try:
+        links = search_by_deep_search(Keyword)
+        if links:
+            all_links += links
+        print(all_links)
+    except Exception as e:
+        print(f'[-] Something went wrong on {e}')
+
+    # try:
+    #     all_links = search_by_duck_duck_go(Keyword)
+    # except Exception as e:
+    #     print(f'[-] Something went wrong on {e}')
+
+    try:
+        links = search_by_ahmia(Keyword)
+        if links:
+            all_links += links
+        print(all_links)
+    except Exception as e:
+        print(f'[-] Something went wrong on {e}')
+
+    try:
+        links = search_by_torgle(Keyword)
+        if links:
+            all_links += links
+        print(all_links)
+    except Exception as e:
+        print(f'[-] Something went wrong on {e}')
+    
+    unique_links = []
+
+    for link in all_links:
+        if link not in unique_links:
+            unique_links.append(link)
+
+    unique_links = [link+'\n' for link in unique_links]
+
+    with open(f'all_links_for_{Keyword}.txt','w') as f:
+        f.writelines(unique_links)
+    
+all_search(Keyword)
 driver.quit()

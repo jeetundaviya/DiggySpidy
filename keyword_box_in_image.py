@@ -1,3 +1,4 @@
+from importlib.resources import path
 import easyocr as e_ocr
 import cv2
 import os
@@ -18,12 +19,8 @@ class KeywordBox:
 
 				ocr_result = result[1].lower()
 
-				if ocr_result == keyword:
+				if keyword in ocr_result:
 					return result
-				elif ' ' in ocr_result:
-					for ocr_result_keyword in ocr_result.split(' '):
-						if ocr_result_keyword == keyword:
-							return result
 		else:
 
 			ocr_results = []
@@ -32,13 +29,9 @@ class KeywordBox:
 
 				ocr_result = result[1].lower()
 
-				if ocr_result == keyword:
+				if keyword in ocr_result:
 					ocr_results.append(result)
-				elif ' ' in ocr_result:
-					for ocr_result_keyword in ocr_result.split(' '):
-						if ocr_result_keyword == keyword:
-							ocr_results.append(result)
-
+					
 			if len(ocr_results) > 0:
 				return ocr_results
 
@@ -67,13 +60,15 @@ class KeywordBox:
 		cv2.imwrite(self.output_img,img)
 
 
-	def __init__(self,input_image,output_image,keyword,all_matches=False):
-		self.image = input_image
+	def __init__(self,input_image_folder,input_image,keyword,all_matches=False):
+		self.image_name= input_image
+		self.image_folder = input_image_folder
+		self.image = os.path.join(input_image_folder,input_image) 
 		input_img = cv2.imread(self.image)
 		self.keyword = keyword
 		self.all_matches = all_matches
 		
-		self.output_img = output_image
+		self.output_img = self.image
 
 		cv2.imwrite(self.output_img,input_img)
 
@@ -84,13 +79,19 @@ class KeywordBox:
 			if self.img_ocr_results:
 				for ocr_result in self.img_ocr_results:
 					self.draw_box(ocr_result)
+				os.rename(self.output_img,os.path.join(self.image_folder,f'(FOUND){self.image_name}') )
 			else:
-				os.remove(self.output_img)
+				os.rename(self.output_img,os.path.join(self.image_folder,f'(NOT FOUND){self.image_name}') )
+				# os.remove(self.output_img)
 		else:
 			
 			self.img_ocr_result = get_keyword_ocr_result(keyword=self.keyword,image=self.image)
 
 			if self.img_ocr_result:
 				self.draw_box(ocr_result)
+				os.rename(self.output_img,os.path.join(self.image_folder,f'(FOUND){self.image_name}') )
 			else:
-				os.remove(self.output_img)
+				os.rename(self.output_img,os.path.join(self.image_folder,f'(NOT FOUND){self.image_name}') )
+				# os.remove(self.output_img)
+
+# KeywordBox('/home/jeetundaviya/Pictures','t.png','hehe',True)

@@ -2,3 +2,6 @@
 env/*
 saved_data/*
 .vscode/*
+*.csv
+*.pdf
+*.txt

@@ -466,9 +466,11 @@ class DiggySpidy:
 							with open(os.path.join(must_have_words_proof_folder,must_have_words_proof_name),'wb') as f2:
 								f2.write(screenshot)
 
-							#KeywordBox(input_image=,output_image=,keyword=,all_matches=)
-							Thread(target=KeywordBox,args=[os.path.join(must_have_words_proof_folder,must_have_words_proof_name),os.path.join(must_have_words_proof_folder,must_have_words_proof_name),word,True]).start()
-							
+							if (len(threading.enumerate())-1) > MAX_THREAD_COUNT:
+								#KeywordBox(input_image_folder,input_image,keyword,all_matches=False)
+								Thread(target=KeywordBox,args=[must_have_words_proof_folder,must_have_words_proof_name,word,True]).start()
+							else:
+								KeywordBox(input_image_folder=must_have_words_proof_folder,input_image=must_have_words_proof_name,keyword=word,all_matches=True)
 
 				
 				except Exception as e:

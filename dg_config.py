@@ -26,7 +26,7 @@ CRAWL_DEPTH = 3
 MAX_CRAWL_COUNT = 10000
 
 '''MAX_THREAD_COUNT parallel scrapping websites.'''
-MAX_THREAD_COUNT = 10
+MAX_THREAD_COUNT = 30
 
 #Scraping options
 '''
