@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import re
 
-SEARCH_ENGINE_RESULTS_SAVE_TO_PATH = os.path.join(OUTPUT_SAVING_PATH,'search_engines_results') 
+SEARCH_ENGINE_RESULTS_SAVE_TO_PATH = os.path.join(OUTPUT_SAVING_PATH,'search_engines_results')
 
 if not os.path.isdir(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH):
     os.makedirs(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH)
@@ -245,50 +245,33 @@ def search_by_torgle(keywords):
 
 Keyword = input('Enter keywords for searching : ')
 
-def all_search(Keyword):
+def safe_search(search_engine,Keyword):
+
+    global all_links
+
+    try:
+        links = search_engine(Keyword)
+
+        if links:
+            all_links += links
+
+    except Exception as e:
+        print(f'[-] Something went wrong on {e} for {search_engine.__name__}')
+
+def DW_all_search(Keyword):
+
+    global all_links
     
-    all_links = []
+    safe_search(search_engine=search_by_tor66,Keyword=Keyword)
 
-    try:
-        links = search_by_tor66(Keyword)
+    safe_search(search_engine=search_by_deep_search,Keyword=Keyword)
 
-        if links:
-            all_links += links
-        print(all_links)
-    except Exception as e:
-        print(f'[-] Something went wrong on {e}')
-            
-    try:
-        links = search_by_deep_search(Keyword)
-        if links:
-            all_links += links
-        print(all_links)
-    except Exception as e:
-        print(f'[-] Something went wrong on {e}')
+    safe_search(search_engine=search_by_ahmia,Keyword=Keyword)
 
-    try:
-        links = search_by_duck_duck_go(Keyword)
-        if links:
-            all_links += links
-    except Exception as e:
-        print(f'[-] Something went wrong on {e}')
+    safe_search(search_engine=search_by_torgle,Keyword=Keyword)
 
-    try:
-        links = search_by_ahmia(Keyword)
-        if links:
-            all_links += links
-        print(all_links)
-    except Exception as e:
-        print(f'[-] Something went wrong on {e}')
+    safe_search(search_engine=search_by_deep_search,Keyword=Keyword)
 
-    try:
-        links = search_by_torgle(Keyword)
-        if links:
-            all_links += links
-        print(all_links)
-    except Exception as e:
-        print(f'[-] Something went wrong on {e}')
-    
     unique_links = []
 
     for link in all_links:
@@ -300,5 +283,5 @@ def all_search(Keyword):
     with open(os.path.join(SEARCH_ENGINE_RESULTS_SAVE_TO_PATH,f'all_links_for_{Keyword}.txt'),'w') as f:
         f.writelines(unique_links)
     
-all_search(Keyword)
+DW_all_search(Keyword)
 driver.quit()

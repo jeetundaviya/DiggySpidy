@@ -553,7 +553,7 @@ class DiggySpidy:
 						if (link not in self.unique_links):
 							if not self.includes_stop_words(link):
 								if self.includes_must_have_words(link):
-									if CRAWL_IN_DOMAIN:
+									if CRAWL_IN_DOMAIN and '.onion' not in link: # Don't apply crawl in domain for onion links
 										if self.base_url_domain not in link:
 											continue
 									filterd_links.append(link)
