@@ -45,15 +45,16 @@ pt = PrettyTable(field_names=flds)
 
 pages = d.find_element(By.CLASS_NAME,'pageslct').find_elements(By.TAG_NAME,'a')
 pages = [page.get_attribute('href') for page in pages]
-print(pages)
+
+print(f'[+] Getting results from {1} page. [+] Total links : {len(pt.rows)}')
 
 parse_table(d.page_source)
 
 for page in pages[1:]:
     d.get(URL)
     parse_table(d.page_source)
-    
-    print(f'[+] {len(pt.rows)}')
+
+    print(f'[+] Getting results from {pages.index(page)+1} page. [+] Total links : {len(pt.rows)}')
 
 d.quit()
 
