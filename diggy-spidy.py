@@ -25,7 +25,7 @@ import threading
 from keyword_box_in_image import KeywordBox
 
 #Loading Website Category Detection Model
-WEBSITE_CATEGORY_MODEL = joblib.load('./NLP/website_category_detection_model.pkl')
+WEBSITE_CATEGORY_MODEL = joblib.load('./NLP/website_category_detection_model.joblib')
 
 def is_connected_to_internet():
 	try:
