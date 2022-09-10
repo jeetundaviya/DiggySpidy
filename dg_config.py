@@ -1,21 +1,41 @@
+import os
+
 #Colors codes defined for logo
 BLUE, RED, WHITE, YELLOW, GREEN, END = '\33[94m', '\033[91m', '\33[97m', '\33[93m', '\033[32m', '\033[0m'
 
-#Tor socks5 proxy
-TOR_PROXY = "socks5://127.0.0.1:9050"
+#region Chrome and ChromeDriver Path
 
-#Important URLs
+if os.name == 'nt':
+    CHROME_BINARY_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+    CHROME_DRIVER_PATH = os.path.join("Required Binaries","win_chromedriver.exe")
+else:
+    CHROME_BINARY_PATH = "/usr/bin/google-chrome"
+    CHROME_DRIVER_PATH = os.path.join("Required Binaries","linux_chromedriver")
+#endregion
+
+#region Proxy Configuration
+PROXY_TYPE = 'socks5'
+PROXY_IP = '127.0.0.1'
+PROXY_PORT = '9050'
+#Tor socks5 proxy
+TOR_PROXY = f"{PROXY_TYPE}://{PROXY_IP}:{PROXY_PORT}"
+#endregion
+
+#region Important URLs
 CHECK_TOR_URL = 'http://check.torproject.org'
 FETCH_IP_DETAILS_URL = 'http://ip-api.com/json'
 URL_FOR_CHECKING_INTERNET_CONNECTIVITY = 'example.com'
+#endregion
 
-# RE Pattens
+#region RE Pattens
 URL_DOMAIN_PATTEN = r'://([\w.]*)'
+#endregion
 
-#Verbose Mode
+#region Verbose Mode Configuration
 TABLE_ROW_NUMBER = 25
+#endregion
 
-# Crawling options
+#region Crawling options
 '''Crawler should or should not stay in same domain while crawling.'''
 CRAWL_IN_DOMAIN = False
 
@@ -27,8 +47,9 @@ MAX_CRAWL_COUNT = 10000
 
 '''MAX_THREAD_COUNT parallel scrapping websites.'''
 MAX_THREAD_COUNT = 30
+#endregion
 
-#Scraping options
+#region Scraping options
 '''
 Use fake user-agent by calling get_random_fake_user_agent() from fake_user_agent.py .
 
@@ -42,22 +63,29 @@ MAX_RESPONSE_TIME = 5
 
 '''It will start crawling every new website after SCRAPE_PAUSE_AFTER_EVERY_URL seconds.'''
 SCRAPE_PAUSE_AFTER_EVERY_URL = 0
+#endregion
 
-#Output folder
+#region Slow Mode Configuration
+KEYWORD_PROOF_REQUIRED = False
+#endregion
+
+#region Output folder
 '''At OUTPUT_SAVING_PATH location the scrapped files will be saved.'''
 OUTPUT_SAVING_PATH = 'saved_data'
+#endregion
 
-#Wordlist file locations
+#region Wordlist file locations
 '''STOPWORDS_IN_LINK_FILE contains words which you don't want in your scraped links for further scraping.'''
-STOPWORDS_IN_LINK_FILE = './Wordlist/stopwords_in_link_file.txt'
+STOPWORDS_IN_LINK_FILE = os.path.join('Wordlist','stopwords_in_link_file.txt')
 
 '''MUST_HAVE_WORDS_IN_LINK_FILE contains words which you want in your scraped links for further scraping.'''
-MUST_HAVE_WORDS_IN_LINK_FILE = './Wordlist/must_have_words_in_link_file.txt'
+MUST_HAVE_WORDS_IN_LINK_FILE = os.path.join('Wordlist','must_have_words_in_link_file.txt') 
 
 '''MUST_HAVE_WORDS_IN_WEBSITE_TEXT_FILE contains words which you want in website visable text for further scraping.'''
-MUST_HAVE_WORDS_IN_WEBSITE_TEXT_FILE = './Wordlist/must_have_words_in_website_text_file.txt'
+MUST_HAVE_WORDS_IN_WEBSITE_TEXT_FILE = os.path.join('Wordlist','must_have_words_in_website_text_file.txt')
+#endregion
 
-#How to enable TOR Controller Port.
+#region How to enable TOR Controller Port.
 
 #----------------------------------------------[CONTROL PORT CONFIGRATION STEPS AND ITS BASED FEATURES]------------------------------------------
 '''
@@ -117,8 +145,9 @@ Jan 26 14:01:28.402 [notice] Opened Control listener connection (ready) on 127.0
 Hurray ! you have successfully configured your tor with control port !
 
 '''
+#endregion
 
-# If TOR Controller Port is enabled !
+#region TOR Controller Port Configuration (if enabled)
 
 '''Enter your TOR control port password here !'''
 CONTROL_PORT_PASSWORD = 'p@5s30R6' 
@@ -128,3 +157,4 @@ CHANGE_IP_AFTER_SCRAPPING_NUMBER_OF_WEBSITES = 25
 
 '''Change IP after every CHANGE_IP_AFTER_MINUTES of minutes.'''
 CHANGE_IP_AFTER_MINUTES = 5
+#endregion

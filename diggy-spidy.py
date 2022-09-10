@@ -1,7 +1,6 @@
 from dg_config import *
 from fake_user_agent import FakeUserAgent
 import joblib
-from distutils.log import error
 import requests as req
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -16,6 +15,9 @@ import sys
 from urllib.parse import urljoin
 from threading import Thread
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.utils import ChromeType
 from selenium.webdriver.common.by import By
 import base64
 import socket
@@ -71,7 +73,6 @@ def print_logo():
 def get_list_from_file(file):
 		with open(file,'r') as f:
 			return [link.replace('\n','') for link in f.readlines() if len(link) > 1]
-			# return f.readlines()
 
 class ScrapedLink:
 	def __init__(self,url):
@@ -96,19 +97,20 @@ class DiggySpidy:
 		
 		self.driver_options.add_argument('--headless')
 
-		self.driver = webdriver.Chrome(options=self.driver_options)
+		self.driver = webdriver.Chrome(service=Service(CHROME_DRIVER_PATH),options=self.driver_options)
+		
 		self.driver.maximize_window() # Maximizing window by default
-	
+		
+		return self.driver
+
 	def load_url_in_driver(self,url,save_to):
 		
-		self.driver.quit()
+		# self.driver.quit()
 
 		if self.use_random_fake_user_agent:
 			self.driver_options.add_argument(f'user-agent={self.fake_user_agent.get_random_fake_user_agent()}')
 
-		self.driver = webdriver.Chrome(options=self.driver_options)
-		
-		self.driver.maximize_window() # Maximizing window by default
+		self.get_driver()
 
 		if 'http' not in url:
 			url='http://'+url
@@ -451,7 +453,7 @@ class DiggySpidy:
 		for word in must_have_words:
 			if (word.lower() in data) or (data in word.lower()):  
 				try:
-					if self.is_slow_mode and self.screenshot_folder:
+					if KEYWORD_PROOF_REQUIRED and self.is_slow_mode and self.screenshot_folder:
 						with open(os.path.join(self.screenshot_folder,'screenshot_full.png'),'rb') as f:
 							screenshot = f.read()
 							
