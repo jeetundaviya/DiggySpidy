@@ -610,8 +610,8 @@ class DiggySpidy:
 		self.controller_port_password = None 
 		
 		#filtering links options
-		self.includes_stop_words = lambda link : (self.are_any_words_in_link(link,self.stopwords_in_link) if self.stopwords_in_link else False)
-		self.includes_must_have_words = lambda link: (self.are_any_words_in_link(link,self.must_have_words_in_link) if self.must_have_words_in_link else True) 
+		self.includes_stop_words = lambda link : (self.are_any_words_in_link(link,self.stopwords_in_link) if self.stopwords_in_link else False) # If stop words list is empty it will return False by default to by-pass this filter
+		self.includes_must_have_words = lambda link: (self.are_any_words_in_link(link,self.must_have_words_in_link) if self.must_have_words_in_link else True) # If must have words in link list is empty it will return True by default to by-pass this filter
 		self.stopwords_in_link = []
 		self.must_have_words_in_link = []
 		self.must_have_words = []
