@@ -6,13 +6,11 @@
 
 <h5><b>[*] Installation :-</b></h5>
 
-<code>
-git clone https://github.com/jeetundaviya/DiggySpidy.git
-<br>
-cd DiggySpidy
-<br>
-pip install -r requirements.txt
-</code>
+<code>git clone https://github.com/jeetundaviya/DiggySpidy.git</code>
+
+<code>cd DiggySpidy</code>
+
+<code>pip install -r requirements.txt</code>
 
 
 <h5><b>[*] Usage :-</b></h5>
