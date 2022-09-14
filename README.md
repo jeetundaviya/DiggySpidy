@@ -1,5 +1,5 @@
 <h1><b>Diggy Spidy</b></h1>
-![s](https://user-images.githubusercontent.com/56348104/190194186-f85ea513-227c-424f-9ee6-47f649b33595.png)
+<img src="https://user-images.githubusercontent.com/56348104/190194186-f85ea513-227c-424f-9ee6-47f649b33595.png">
 <h3><b>[Q] What is Diggy Spidy ?</b></h3>
 
 <h3><b>[A] Diggy Spidy is a Surface and a Dark Web Crawler.</b></h3>
