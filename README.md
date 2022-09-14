@@ -4,6 +4,21 @@
 
 <h3><b>[A] Diggy Spidy is a Surface and a Dark Web Crawler.</b></h3>
 
+<h5><b>[*] Installation :-</b></h5>
+
+<code>
+git clone https://github.com/jeetundaviya/DiggySpidy.git
+<br>
+cd DiggySpidy
+<br>
+pip install -r requirements.txt
+</code>
+
+
+<h5><b>[*] Usage :-</b></h5>
+
+<code>python diggy-spidy.py</code>
+
 <h5><b>[*] Features :-</b></h5>
 
 -> Slow and Fast Mode.<br>
@@ -14,7 +29,7 @@
 -> Stopwords and Must have words filter in the link.<br>
 -> Multiple List Crawling (Parallel Crawling)<br>
 
-<h5><b>[*] Special:-</b></h5>
+<h5><b>[*] Special :-</b></h5>
 
 1) Keyword Based Fetching Links :-
 
