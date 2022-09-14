@@ -1,5 +1,10 @@
+#region  DiggySpidy Imports
 from dg_config import *
 from fake_user_agent import FakeUserAgent
+from keyword_box_in_image import KeywordBox
+#endregion
+
+#region Generic and 3rd Party Libraries Imports
 import joblib
 import requests as req
 from bs4 import BeautifulSoup
@@ -24,7 +29,7 @@ import socket
 import re
 from threading import Thread
 import threading
-from keyword_box_in_image import KeywordBox
+#endregion
 
 #Loading Website Category Detection Model
 WEBSITE_CATEGORY_MODEL = joblib.load('./NLP/website_category_detection_model.joblib')
