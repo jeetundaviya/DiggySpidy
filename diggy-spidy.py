@@ -100,7 +100,11 @@ class DiggySpidy:
 			if self.is_tor_connected():
 				self.driver_options.add_argument(f'--proxy-server={TOR_PROXY}')
 		
+		# Opening Chrome in Headless mode (in background)
 		self.driver_options.add_argument('--headless')
+		
+		# Disabling the logging from chrome-driver
+		self.driver_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
 		self.driver = webdriver.Chrome(service=Service(CHROME_DRIVER_PATH),options=self.driver_options)
 		
