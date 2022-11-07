@@ -76,7 +76,7 @@ def print_logo():
                                                                                         BLUE).center(100) +
              '\n' + 'Made with {}<3{} by: Jeet Undaviya ({}0.<{}) and Dhaiwat Mehta ({}1.<{}) {}'.format(RED,YELLOW, RED, YELLOW,RED, YELLOW, BLUE).center(115) +
              '\n' + 'Version: {}2.0{}'.format(YELLOW, END).center(85)+
-             '\n\n' + 'Type python diggy_spidy.py -h or --help for help'.format(YELLOW, END).center(80) + '\n\n')
+             '\n\n' + 'Type python diggy-spidy.py -h or --help for help'.format(YELLOW, END).center(80) + '\n\n')
 
 def get_list_from_file(file):
 		with open(file,'r') as f:
@@ -662,96 +662,109 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 
+	i_args = {'url':False,'file':False,'print-ip-details':False,'crawl':False,'slow':False,'verbose':False,'torrify':False}
+
 	try:
 		if is_connected_to_internet():
 			if len(sys.argv) == 1:
 				print_logo()
+				i_args['url'] = input('Enter url (Press enter if you want to enter url links.txt) : ')
+				i_args['file'] = input('Enter url links.txt loaction : ') if len(i_args['url']) == 0 else None
+				i_args['print-ip-details'] = True if 'y' in input('Print IP details (y/N) : ').lower() else False
+				i_args['crawl'] = True if 'c' in input('To crawl/scrape (c/s) : ').lower() else False
+				i_args['slow'] = True if 'y' in input('Enable slow mode (y/N) : ').lower() else False
+				i_args['verbose'] = True if 'y' in input('Enable verbose output (y/N) : ').lower() else False
+				i_args['torrify'] = True if 'y' in input('Enable tor as proxy (y/N) : ').lower() else False
+
 			else:
 				print_small_logo()
 
-				obj = DiggySpidy()
-				
-				if args.print_ip_details:
-					print('[+] Your current IP location.\n')
-					obj.print_ip_desc_table()		
+			obj = DiggySpidy()
+			
+			if (args.print_ip_details and len(sys.argv) != 1) | i_args['print-ip-details']:
+				print('[+] Your current IP location.\n')
+				obj.print_ip_desc_table()		
 
-				url = args.url
+			url = args.url if len(sys.argv) != 1 else i_args['url']
 
-				obj.base_url = url
+			obj.base_url = url
 
-				if obj.base_url:
-					obj.base_url_domain = re.search(URL_DOMAIN_PATTEN,obj.base_url).group(1)
+			if obj.base_url:
+				obj.base_url_domain = re.search(URL_DOMAIN_PATTEN,obj.base_url).group(1)
 
-				obj.is_slow_mode = args.slow
+			obj.is_slow_mode = args.slow if len(sys.argv) != 1 else i_args['slow']
 
-				obj.crawl_depth = CRAWL_DEPTH
+			obj.crawl_depth = CRAWL_DEPTH
 
-				obj.use_random_fake_user_agent = USE_FAKE_USER_AGENT
+			obj.use_random_fake_user_agent = USE_FAKE_USER_AGENT
 
-				if OUTPUT_SAVING_PATH:
-					if not os.path.isdir(OUTPUT_SAVING_PATH):
-						os.mkdir(OUTPUT_SAVING_PATH)
+			if OUTPUT_SAVING_PATH:
+				if not os.path.isdir(OUTPUT_SAVING_PATH):
+					os.mkdir(OUTPUT_SAVING_PATH)
 
-				obj.default_output_folder_location = OUTPUT_SAVING_PATH
+			obj.default_output_folder_location = OUTPUT_SAVING_PATH
 
-				obj.create_url_folder(url=obj.base_url,save_to=obj.default_output_folder_location)
+			obj.create_url_folder(url=obj.base_url,save_to=obj.default_output_folder_location)
 
-				obj.extra_data_folder = os.path.join(obj.get_url_folder(url=obj.base_url,save_to=obj.default_output_folder_location),"extra_data")
-				
-				if not os.path.isdir(obj.extra_data_folder):
-					os.mkdir(obj.extra_data_folder)
+			obj.extra_data_folder = os.path.join(obj.get_url_folder(url=obj.base_url,save_to=obj.default_output_folder_location),"extra_data")
+			
+			if not os.path.isdir(obj.extra_data_folder):
+				os.mkdir(obj.extra_data_folder)
 
-				obj.verbose_output = args.verbose
+			obj.verbose_output = args.verbose if len(sys.argv) != 1 else i_args['verbose']
 
-				obj.must_torrify = args.torrify
+			obj.must_torrify = args.torrify if len(sys.argv) != 1 else i_args['torrify']
 
-				if 'onion' in url and not args.torrify:
-					print('[+] Entered link is an onion link hence automatically using tor proxy.')
-					obj.must_torrify = True
+			if 'onion' in url and not obj.must_torrify:
+				print('[+] Entered link is an onion link hence automatically using tor proxy.')
+				obj.must_torrify = True
 
-				obj.max_crawl_count = MAX_CRAWL_COUNT
+			obj.max_crawl_count = MAX_CRAWL_COUNT
 
-				obj.max_response_time = MAX_RESPONSE_TIME
+			obj.max_response_time = MAX_RESPONSE_TIME
 
-				obj.pause_crawl_duration = SCRAPE_PAUSE_AFTER_EVERY_URL
+			obj.pause_crawl_duration = SCRAPE_PAUSE_AFTER_EVERY_URL
 
-				obj.stopwords_in_link = get_list_from_file(STOPWORDS_IN_LINK_FILE)
+			obj.stopwords_in_link = get_list_from_file(STOPWORDS_IN_LINK_FILE)
 
-				obj.must_have_words_in_link = get_list_from_file(MUST_HAVE_WORDS_IN_LINK_FILE)
+			obj.must_have_words_in_link = get_list_from_file(MUST_HAVE_WORDS_IN_LINK_FILE)
 
-				obj.must_have_words = get_list_from_file(MUST_HAVE_WORDS_IN_WEBSITE_TEXT_FILE)	
+			obj.must_have_words = get_list_from_file(MUST_HAVE_WORDS_IN_WEBSITE_TEXT_FILE)	
 
-				obj.controller_port_password = CONTROL_PORT_PASSWORD
+			obj.controller_port_password = CONTROL_PORT_PASSWORD
 
-				obj.changing_ip_after_number_scarpped_website = CHANGE_IP_AFTER_SCRAPPING_NUMBER_OF_WEBSITES
+			obj.changing_ip_after_number_scarpped_website = CHANGE_IP_AFTER_SCRAPPING_NUMBER_OF_WEBSITES
 
-				obj.changing_ip_after_minutes = CHANGE_IP_AFTER_MINUTES
-		
-		
-				if obj.is_slow_mode:
-					obj.get_driver()
-				else:
-					obj.get_session()
-				
-	#------------------------------------------------------------------------------------------------------------------------------------------------
-				if args.crawl and args.file:
-					with open(args.file,'r') as f:
-						links = f.readlines()
-						for link in links:
-							link = link.replace('\n', '')
-							if link:
-								obj.crawl(link)
-				elif args.file:
-					with open(args.file,'r') as f:
-						links = f.readlines()
-						for link in links:
-							link = link.replace('\n', '')
-							if link:
-								obj.scarp(link)
-				elif args.crawl:
-					obj.crawl(url)
-				else:
-					obj.scarp(url)
+			obj.changing_ip_after_minutes = CHANGE_IP_AFTER_MINUTES
+	
+	
+			if obj.is_slow_mode:
+				obj.get_driver()
+			else:
+				obj.get_session()
+			
+#------------------------------------------------------------------------------------------------------------------------------------------------
+			
+			links_file_location = args.file if len(sys.argv) != 1 else i_args['file']
+
+			if ((args.crawl and len(sys.argv) != 1) | i_args['crawl']) and links_file_location:		
+				with open(links_file_location,'r') as f:
+					links = f.readlines()
+					for link in links:
+						link = link.replace('\n', '')
+						if link:
+							obj.crawl(link)
+			elif links_file_location:
+				with open(links_file_location,'r') as f:
+					links = f.readlines()
+					for link in links:
+						link = link.replace('\n', '')
+						if link:
+							obj.scarp(link)
+			elif (args.crawl and len(sys.argv) != 1) | i_args['crawl']:
+				obj.crawl(url)
+			else:
+				obj.scarp(url)
 	except KeyboardInterrupt:
 		obj.save_file(file_name='successful_scraped_links.txt',folder_location=obj.extra_data_folder,data_list=obj.get_current_scraped_list())
 		obj.save_file(file_name='unique_links.txt',folder_location=obj.extra_data_folder,data_list=obj.unique_links)

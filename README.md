@@ -4,7 +4,7 @@
 
 <h3><b>[A] Diggy Spidy is a Surface and a Dark Web Crawler.</b></h3>
 
-<h5><b>[*] Installation :-</b></h5>
+<h5><b>[*] (Method 1) Installation :-</b></h5>
 
 <code>git clone https://github.com/jeetundaviya/DiggySpidy.git</code>
 
@@ -12,6 +12,15 @@
 
 <code>pip install -r requirements.txt</code>
 
+<h5><b>[*] (Method 2) Installation by Docker :-</b></h5>
+
+<code>git clone https://github.com/jeetundaviya/DiggySpidy.git</code>
+
+<code>cd DiggySpidy</code>
+
+<code>docker build -t diggy-spidy .</code>
+
+<code>docker run --name test -it diggy-spidy</code>
 
 <h5><b>[*] Usage :-</b></h5>
 
@@ -38,5 +47,3 @@
 <h5><b>[*] Our Goal :-</b></h5>
 
 -> We aim to develop a cyber-surveillance and cyber-threat-intelligence model from our updated indexed dataset and also to built an alert system if any of the requested target is about to compromise from our model.
-
-...
