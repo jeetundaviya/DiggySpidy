@@ -32,6 +32,8 @@ import socket
 import re
 from threading import Thread
 import threading
+import subprocess
+from tqdm import tqdm
 #endregion
 
 #Loading Website Category Detection Model
@@ -105,6 +107,7 @@ class DiggySpidy:
 		
 		# Opening Chrome in Headless mode (in background)
 		self.driver_options.add_argument('--headless')
+		self.driver_options.add_argument('--no-sandbox')
 		
 		# Disabling the logging from chrome-driver
 		self.driver_options.add_experimental_option('excludeSwitches', ['enable-logging'])
@@ -681,6 +684,15 @@ if __name__ == '__main__':
 
 			obj = DiggySpidy()
 			
+			obj.must_torrify = args.torrify if len(sys.argv) != 1 else i_args['torrify']
+
+			if obj.must_torrify:
+				print('[+] Starting Tor ...')
+				subprocess.Popen('tor')
+				# Waiting 1 minute for letting tor start properly
+				for i in tqdm(range(60),desc='[+] Waiting for 1 minute ....'):
+					time.sleep(1)
+
 			if (args.print_ip_details and len(sys.argv) != 1) | i_args['print-ip-details']:
 				print('[+] Your current IP location.\n')
 				obj.print_ip_desc_table()		
@@ -712,8 +724,6 @@ if __name__ == '__main__':
 				os.mkdir(obj.extra_data_folder)
 
 			obj.verbose_output = args.verbose if len(sys.argv) != 1 else i_args['verbose']
-
-			obj.must_torrify = args.torrify if len(sys.argv) != 1 else i_args['torrify']
 
 			if 'onion' in url and not obj.must_torrify:
 				print('[+] Entered link is an onion link hence automatically using tor proxy.')

@@ -18,9 +18,7 @@
 
 <code>cd DiggySpidy</code>
 
-<code>docker build -t diggy-spidy .</code>
-
-<code>docker run --name test -it diggy-spidy</code>
+<code>docker-compose run DiggySpidy</code>
 
 <h5><b>[*] (Method 3) Installation from <a href="https://hub.docker.com/repository/docker/jeetundaviya/diggy-spidy">Docker Hub</a></b></h5>
 
