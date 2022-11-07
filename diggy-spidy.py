@@ -5,6 +5,9 @@ from keyword_box_in_image import KeywordBox
 #endregion
 
 #region Generic and 3rd Party Libraries Imports
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 import joblib
 import requests as req
 from bs4 import BeautifulSoup
