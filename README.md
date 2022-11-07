@@ -22,6 +22,8 @@
 
 <code>docker run --name test -it diggy-spidy</code>
 
+<h5><b>[*] (Method 3) Installation from <a href="https://hub.docker.com/repository/docker/jeetundaviya/diggy-spidy">Docker Hub</a></b></h5>
+
 <h5><b>[*] Usage :-</b></h5>
 
 <code>python diggy-spidy.py</code>
