@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Search
+{% endblock %}
+{% load static %}
+
+{% block Enter_URL %}
+
+<form class="" name="link_form" onsubmit="#" action="{% url 'home' %}" method="post">
+    {% csrf_token %}
+
+    <p style="text-align:left; margin: 5% 13% 0% 13%;">Drop an Onion Link</p>
+    <div class="input-group">
+        <div class="input-group-prepend">
+            <span class="input-group-text">Enter Link</span>
+        </div>
+
+        <input type="text" class="form-control" name="link" value="" placeholder="Drop an Onion Link" autocomplete="off">
+
+        <div class="input-group-append">
+          <button type="submit" data-toggle="modal"  data-target ="#modal" name="button_link" value="button_link" class="btn btn-dark" >Submit Link</button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modal_text" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modal_text"></h5>
+          </div>
+        </div>
+      </div>
+    </div>
+</form>
+
+{% if URL|length > 0 %}
+
+{% if JSON_Output != "None" %}
+
+<div class="JSON_Output_parent p-1">
+  <p class="card-title" style="text-align:left; margin: 0% 0% 0% 13%;"><b>Data dictionary :- </b></p>
+  <div id="JSON_Output_child" class="JSON_Output_child card p-3 bg-dark text-white">
+    <p class="card-text">{{JSON_Output}}</p>
+  </div>
+  <button id="Copy_JSON_Btn" type="button" class="btn btn-danger ">
+    <b>Copy <span><img style="height: 25px;width:25px;" src="{% static 'assets/copy_icon.svg'%}"></span> </b>
+</button>
+
+<script>
+  var Copy_JSON_Btn = document.getElementById("Copy_JSON_Btn")
+  Copy_JSON_Btn.addEventListener("click", function() {
+    copyToClipboard(document.getElementById("JSON_Output_child"));
+});
+
+  function copyToClipboard(elem) {
+	  navigator.clipboard.writeText(elem.innerText).then(function() {
+      /* clipboard successfully set */
+      Copy_JSON_Btn = document.getElementById("Copy_JSON_Btn");
+      Copy_JSON_Btn.innerText = "Copied !";
+      Copy_JSON_Btn.className = "btn btn-success";
+    }, 
+    function() {
+      /* clipboard write failed */
+      window.alert('Opps! Your browser does not support the Clipboard API');
+    });
+}
+
+</script>
+
+</div>
+
+{% else %}
+<p style="text-align:left; margin: 5% 13% 0% 13%;"><b>Unable to scrape the {{URL}} !</b></p>
+{% endif %}
+
+{% endif %}
+
+
+{% endblock %}

@@ -1,8 +1,8 @@
 version: '3.1'
-name: Diggy Spidy (Dark and Surface web crawler and scraper)
+
 services:
   DiggySpidy:
-    image: jeetundaviya/diggy-spidy
+    image: diggy-spidy
     build: .
     volumes:
-      - 'C:\Users\jeetu\Desktop\DiggySpidy\saved_data:/DiggySpidy/saved_data' 
+      - './saved_data:/DiggySpidy/saved_data' 
