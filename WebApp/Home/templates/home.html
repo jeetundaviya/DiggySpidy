@@ -89,13 +89,12 @@ Search
 var Copy_Table_Btn = document.getElementById("Copy_Table_Btn")
 Copy_Table_Btn.addEventListener("click", function() {
   console.log("{{Excel_File_Location}}");
-  window.open("{{Excel_File_Location}}");
+  downloadCSVFile();
   Copy_Table_Btn.innerText = "Downloaded !";
   Copy_Table_Btn.className = "Copy_Btn btn btn-success";
 });
 
 function downloadCSVFile(csv_data) {
- 
 //  // Create CSV file object and feed our
 //  // csv_data into it
 //  CSVFile = new Blob([csv_data], { type: "text/csv" });
@@ -120,9 +119,13 @@ function downloadCSVFile(csv_data) {
  var temp_link = document.createElement('a');
 
  // Download csv file
- temp_link.download = "{{Only_URL}}.csv";
+//  temp_link.download = "{{Only_URL}}.xlsx";
+
 //  var url = window.URL.createObjectURL("{{CSV_File_Location}}");
- temp_link.href = "{{Excel_File_Location}}";
+//  temp_link.href = "{{Excel_File_Location}}";
+ temp_link.href = "/download";
+
+ 
 
  // This link should not be displayed
  temp_link.style.display = "none";
