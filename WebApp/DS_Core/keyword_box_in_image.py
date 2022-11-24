@@ -93,5 +93,3 @@ class KeywordBox:
 			else:
 				os.rename(self.output_img,os.path.join(self.image_folder,f'(NOT FOUND){self.image_name}') )
 				# os.remove(self.output_img)
-
-# KeywordBox('/home/jeetundaviya/Pictures','t.png','hehe',True)

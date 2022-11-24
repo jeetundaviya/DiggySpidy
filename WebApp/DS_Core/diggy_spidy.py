@@ -2,9 +2,9 @@
 #region Generic and 3rd Party Libraries Imports
 import warnings
 
-from .dg_config import *
+from DS_Core.dg_config import *
 from DS_Core.fake_user_agent import FakeUserAgent
-from DS_Core.keyword_box_in_image import KeywordBox
+# from DS_Core.keyword_box_in_image import KeywordBox
 
 #endregion
 
@@ -22,8 +22,6 @@ import time
 from argparse import ArgumentParser
 from threading import Thread
 from urllib.parse import urljoin
-
-import joblib
 import pandas as pd
 import requests as req
 from bs4 import BeautifulSoup
@@ -38,9 +36,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.core.utils import ChromeType
 
 #endregion
-
-#Loading Website Category Detection Model
-WEBSITE_CATEGORY_MODEL = joblib.load('./DS_Core/NLP/website_category_detection_model.joblib')
 
 def is_connected_to_internet():
 	try:
@@ -373,7 +368,7 @@ class DiggySpidy:
 
 				html = html_content
 
-				soup = BeautifulSoup(html,'lxml')
+				soup = BeautifulSoup(html,'html.parser')
 
 				raw_html = soup.prettify()
 				try:
@@ -408,6 +403,7 @@ class DiggySpidy:
 				data_dict = {
 				"url":url,
 				"folder_location":url_folder_name,
+				"excel_file_location":os.path.join(url_folder_name,only_url+'.xlsx'),
 				"text":all_text,
 				"html":raw_html,
 				"title": title_text,
@@ -432,14 +428,14 @@ class DiggySpidy:
 
 				self.print_live_updates()
 
-				pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_csv(os.path.join(url_folder_name,only_url+'.csv'),index=False)
+				pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_excel(os.path.join(url_folder_name,only_url+'.xlsx'),index=False)
 
 				if self.must_have_words:
 					if self.is_must_have_words_in_textual_data(only_url=only_url,data=all_text):
 						self.must_have_words_filtered_links.append(url)
 
-				#Saving all data in a csv format for scrapped link.
-				pd.DataFrame().from_dict(ds_obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(self.extra_data_folder,f'Last_Session_All_Scrapped_Links_Data.csv'),index=False)
+				#Saving all data in a excel format for scrapped link.
+				pd.DataFrame().from_dict(ds_obj.get_current_scraped_dict(),orient='index').transpose().to_excel(os.path.join(self.extra_data_folder,f'Last_Session_All_Scrapped_Links_Data.xlsx'),index=False)
 
 				self.save_file(file_name='successful_scraped_links.txt',folder_location=self.extra_data_folder,data_list=self.get_current_scraped_list())
 				self.save_file(file_name='unique_links.txt',folder_location=self.extra_data_folder,data_list=self.unique_links)
@@ -471,26 +467,28 @@ class DiggySpidy:
 		for word in must_have_words:
 			if (word.lower() in data) or (data in word.lower()):  
 				try:
-					if KEYWORD_PROOF_REQUIRED and self.is_slow_mode and self.screenshot_folder:
-						with open(os.path.join(self.screenshot_folder,'screenshot_full.png'),'rb') as f:
-							screenshot = f.read()
+					self.errors.append('[-] Currently KEYWORD_PROOF_REQUIRED with OCR is disabled (due to easy-ocr dependency -> torch have no dependency for py11) !')
+					print('[-] Currently KEYWORD_PROOF_REQUIRED with OCR is disabled (due to easy-ocr dependency -> torch have no dependency for py11) !')
+					# if KEYWORD_PROOF_REQUIRED and self.is_slow_mode and self.screenshot_folder:
+					# 	with open(os.path.join(self.screenshot_folder,'screenshot_full.png'),'rb') as f:
+					# 		screenshot = f.read()
 							
-							must_have_words_proof_name = f'{word}_found_in_{only_url.replace("/","_")}.png'
+					# 		must_have_words_proof_name = f'{word}_found_in_{only_url.replace("/","_")}.png'
 
-							must_have_words_proof_folder = os.path.join(self.extra_data_folder,'must_have_words_proof')
+					# 		must_have_words_proof_folder = os.path.join(self.extra_data_folder,'must_have_words_proof')
 
-							if not os.path.isdir(must_have_words_proof_folder):
-								os.makedirs(must_have_words_proof_folder)
+					# 		if not os.path.isdir(must_have_words_proof_folder):
+					# 			os.makedirs(must_have_words_proof_folder)
 							
 
-							with open(os.path.join(must_have_words_proof_folder,must_have_words_proof_name),'wb') as f2:
-								f2.write(screenshot)
+					# 		with open(os.path.join(must_have_words_proof_folder,must_have_words_proof_name),'wb') as f2:
+					# 			f2.write(screenshot)
 
-							if (len(threading.enumerate())-1) > MAX_THREAD_COUNT:
-								#KeywordBox(input_image_folder,input_image,keyword,all_matches=False)
-								Thread(target=KeywordBox,args=[must_have_words_proof_folder,must_have_words_proof_name,word,True]).start()
-							else:
-								KeywordBox(input_image_folder=must_have_words_proof_folder,input_image=must_have_words_proof_name,keyword=word,all_matches=True)
+					# 		if (len(threading.enumerate())-1) > MAX_THREAD_COUNT:
+					# 			#KeywordBox(input_image_folder,input_image,keyword,all_matches=False)
+					# 			Thread(target=KeywordBox,args=[must_have_words_proof_folder,must_have_words_proof_name,word,True]).start()
+					# 		else:
+					# 			KeywordBox(input_image_folder=must_have_words_proof_folder,input_image=must_have_words_proof_name,keyword=word,all_matches=True)
 
 				
 				except Exception as e:
@@ -790,8 +788,8 @@ if __name__ == '__main__':
 
 		ds_obj.print_live_updates()
 
-		#Saving all data in a csv format for scrapped link.
-		pd.DataFrame().from_dict(ds_obj.get_current_scraped_dict(),orient='index').transpose().to_csv(os.path.join(ds_obj.extra_data_folder,f'All_Scrapped_Data_{round(time.time())}.csv'),index=False)
+		#Saving all data in a excel format for scrapped link.
+		pd.DataFrame().from_dict(ds_obj.get_current_scraped_dict(),orient='index').transpose().to_excel(os.path.join(ds_obj.extra_data_folder,f'All_Scrapped_Data_{round(time.time())}.xlsx'),index=False)
 			
 		print('\n[-] Quiting ...')
 		exit(0)
