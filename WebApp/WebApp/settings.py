@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ra73$d(0xkd_w^b-tqqbh5%p(ddvfr81@am2zcf%15tr8w=omt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1','diggy-spidy.herokuapp.com']
 
 
 # Application definition
