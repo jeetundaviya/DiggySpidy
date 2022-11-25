@@ -1,1 +1,1 @@
-web: python WebApp/WebApp/manage.py runserver 0.0.0.0:$PORT
+web: python WebApp/manage.py runserver 0.0.0.0:$PORT
