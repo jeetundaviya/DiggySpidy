@@ -1,1 +1,1 @@
-web: gunicorn WebApp.WebApp.wsgi 
+web: python WebApp/WebApp/manage.py runserver 0.0.0.0:$PORT
