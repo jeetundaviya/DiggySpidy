@@ -27,6 +27,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1','diggy-spidy.herokuapp.com']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://127.0.0.1',
+    'https://diggy-spidy.herokuapp.com'
+]
 
 # Application definition
 
