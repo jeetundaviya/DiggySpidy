@@ -92,12 +92,6 @@ h4 {
 	border-radius: 0.25rem;
 }
 
-#celery-result {
-	margin: 2% auto;
-	text-align: center;
-	color: rgb(255 255 255 / 75%);
-}
-
 form > p {
 	font-weight: bold;
 }
@@ -129,17 +123,6 @@ form > p {
 .card-body {
 	padding: 2% !important;
 	font-size: 120%;
-}
-
-/* Card ends*/
-
-.modal {
-	background-color: black;
-}
-
-#modal_text {
-	color: black;
-	font-weight: bold;
 }
 
 .div_child{   
@@ -182,3 +165,16 @@ form > p {
 	right:150px;
 	z-index:1;
 }
+
+#loading_form_spinner{
+	display: block;
+	position:absolute; 
+	z-index:1;
+	justify-content: center;
+	text-align: center;
+	align-items: center;
+  	height: 100%;
+	width: 100%;
+}
+
+  

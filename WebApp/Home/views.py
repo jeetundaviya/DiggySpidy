@@ -3,6 +3,7 @@ from django.shortcuts import render
 import pandas as pd
 import os
 import mimetypes
+import time 
 # Import HttpResponse module
 from django.http.response import HttpResponse
 
@@ -12,7 +13,6 @@ DATA_DICT = None
 def home(response):
     global DATA_DICT     
     if response.method == "POST":
-
         link = response.POST.get('link')
 
         if 'http' not in link:

@@ -1,6 +1,7 @@
-*__pycache__*
+*pycache*
 *env*
 *saved_data*
 *.vscode*
 *.csv
 *.pdf
+*.pyc
