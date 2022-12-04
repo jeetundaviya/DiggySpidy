@@ -1,7 +1,7 @@
-*__pycache__/*
-env/*
-saved_data/*
-.vscode/*
+*pycache*
+*env*
+*saved_data*
+*.vscode*
 *.csv
 *.pdf
-*.txt
+*.pyc
