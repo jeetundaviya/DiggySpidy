@@ -177,4 +177,14 @@ form > p {
 	width: 100%;
 }
 
+#loading_text_form_spinner{
+	animation: loading_text_form_spinner 1s linear infinite;
+}
+
+@keyframes loading_text_form_spinner {
+	50% {
+	  opacity: 0;
+	}
+  }
+  
   

@@ -26,13 +26,11 @@ Search
 </form>
 
 
-
-  <div id="loading_form_spinner" hidden="false">
-    <!-- <div id="loading_form_spinner" hidden="true"> -->
+    <div id="loading_form_spinner" hidden="true">
       <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script> 
       <lottie-player src="{% static 'assets/spider.json'%}" background="transparent" speed="1" style="width: 300px; height: 300px; text-align: center; margin: 0 auto;" loop autoplay></lottie-player>
       <p style="text-align:center; font-size: large; ">
-        <strong>Loading ...</strong> 
+        <h4 id="loading_text_form_spinner" ><strong>Loading ...</strong> </h4>
       </p>
    </div>
 
@@ -58,7 +56,7 @@ Search
       <p class="card-text">{{Table|safe}}</p>
       </div>
       <button id="Copy_Table_Btn" type="button" class="Copy_Btn btn btn-danger ">
-        <b>Download <span><img style="height: 25px;width:25px;" src="{% static 'assets/copy_icon.svg'%}"></span> </b>
+        <b>Download <span><img style="height: 25px;width:25px;" src="{% static 'assets/downloading.png'%}"></span> </b>
   </div>
 
   <div id="Data_Dictonary_Div" class="div_parent p-1">
@@ -103,8 +101,11 @@ Search
   
   
   //  Functionality for Downloading and Copying to clipboard ! 
-  
-    document.getElementById("Table_Div").hidden = true;
+    table_div =  document.getElementById("Table_Div")
+    if(table_div != null){
+      table_div.hidden = true;
+    }
+    
     function hideTable(){
       document.getElementById("Table_Div").hidden = true;
       document.getElementById("Data_Dictonary_Div").hidden = false;
@@ -116,18 +117,23 @@ Search
     }
   
     var Copy_JSON_Btn = document.getElementById("Copy_JSON_Btn")
-    Copy_JSON_Btn.addEventListener("click", function() {
+    if(Copy_JSON_Btn != null){
+      Copy_JSON_Btn.addEventListener("click", function() {
       copyToClipboard(document.getElementById("Data_Dictonary_child"),Copy_JSON_Btn);
-  });
+      });
+    }
   
   var Copy_Table_Btn = document.getElementById("Copy_Table_Btn")
-  Copy_Table_Btn.addEventListener("click", function() {
+  if(Copy_Table_Btn != null){
+
+    Copy_Table_Btn.addEventListener("click", function() {
     console.log("{{Excel_File_Location}}");
     downloadExcelFile();
     Copy_Table_Btn.innerText = "Downloaded !";
     Copy_Table_Btn.className = "Copy_Btn btn btn-success";
-  });
-  
+    });
+  }
+
   function downloadExcelFile(csv_data) {
   
    var temp_link = document.createElement('a');
