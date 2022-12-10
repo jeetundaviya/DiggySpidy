@@ -12,19 +12,23 @@
 
 <code>pip install -r requirements.txt</code>
 
+<code>python ./WebApp/manage.py runserver</code>
+
 <h5><b>[*] (Method 2) Installation by Docker :-</b></h5>
 
 <code>git clone https://github.com/jeetundaviya/DiggySpidy.git</code>
 
 <code>cd DiggySpidy</code>
 
-<code>docker-compose run DiggySpidy</code>
+<code>sudo DOCKER_BUILDKIT=1 docker build -t ds-web .</code>
+
+<code>sudo docker run -p 8000:8000 ds-web</code>
 
 <h5><b>[*] (Method 3) Installation from <a href="https://hub.docker.com/repository/docker/jeetundaviya/diggy-spidy">Docker Hub</a></b></h5>
 
 <h5><b>[*] Usage :-</b></h5>
 
-<code>python diggy-spidy.py</code>
+<code>python ./WebApp/DS_Core/diggy-spidy.py</code>
 
 <h5><b>[*] Features :-</b></h5>
 
