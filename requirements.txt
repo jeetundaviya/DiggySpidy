@@ -39,5 +39,4 @@ trio==0.22.0
 trio-websocket==0.9.2
 urllib3==1.26.13
 wcwidth==0.2.5
-webdriver-manager==3.8.5
 wsproto==1.2.0
