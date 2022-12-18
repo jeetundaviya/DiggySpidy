@@ -219,15 +219,6 @@ form > p {
 	box-shadow: 0 5px 15px rgb(174, 10, 10);
   }
 
-  input[type=checkbox]{
-	width: 50px;
-	height: 50px;
-	border-radius: 25px;
-	border: 5px solid rgb(174, 10, 10);
-	/* padding: 20px;  */
-	margin: 3% 3% 3% 0%;
-  }
-
   #Submit_Link_Btn{
 	border-radius: 25px;
 	padding: 0% 0.5%;
@@ -256,3 +247,27 @@ form > p {
 	text-align: center;
 	vertical-align: middle;
   }
+
+  #Open_Settings{
+	
+	padding-bottom: 10px;
+  }
+
+  input[type=checkbox]{
+	width: 25px;
+	height: 25px;
+  }
+  
+.round_checkbox{
+	width: 30px;
+	height: 30px;
+	border-radius: 15px;
+	background-color: rgb(174, 10, 10);
+	margin-right: 5px;
+}
+
+label{
+	margin: 0 15px 0 5px;
+}
+
+  

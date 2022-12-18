@@ -14,10 +14,7 @@ Search
     <div class="row justify-content-center">
       <input type="text" name="link" value="" placeholder="Drop a Website URL" autocomplete="off">
 
-      <input hidden="true" type="checkbox" name="do_render_html" value="yes" checked="true">
-
-
-      <div id="settings_section">
+      <div id="settings_section" onclick="open_settings()">
       <img id="settings_icon" src="{% static 'assets/setting.png'%}"/>
       <!-- On click of this button A pop form should pop-up for setting the scraping mode and other configurations and it will be saved to the database for future refrence ! -->
       </div>
@@ -25,7 +22,27 @@ Search
     <button id="Submit_Link_Btn" type="submit"  name="button_link" value="button_link">Submit Link</button>
 
     </div>
-      
+  <div class="row justify-content-center" id="Open_Settings" hidden="true">
+    
+    <!-- <div class="round_checkbox"> -->
+      {% if slow_mode%}
+    <input id="take_screenshot_cb" class="styled-checkbox" type="checkbox" name="do_render_html" value="yes" checked>
+      {% else %}
+    <input id="take_screenshot_cb" class="styled-checkbox" type="checkbox" name="do_render_html">
+      {% endif %}
+    <!-- </div> -->
+
+    <label for="take_screenshot_cb">Take Screenshot</label>
+
+    <!-- <div class="round_checkbox"> -->
+      {% if torrify %}
+      <input id="enable_tor_proxy_cb" class="styled-checkbox" type="checkbox" name="enable_tor_proxy" value="yes" checked>
+      {% else %}
+      <input id="enable_tor_proxy_cb" class="styled-checkbox" type="checkbox" name="enable_tor_proxy">
+      {% endif %}
+    <!-- </div> -->
+      <label for="enable_tor_proxy_cb">Enable Tor Proxy</label>
+  </div>    
 </form>
 </div>
 
@@ -59,6 +76,8 @@ Search
 
   {% if Data_Dictonary != "None" %}
 
+  {% if Data_Dictonary.screenshot_location != "NA" %}
+
   <div id="ScreenShot_Div class="div_parent p-1">
     <p class="card-title" style="text-align:left; margin: 0% 0% 0% 13%;"><b>ScreenShot:- </b></p>
     <div id="Table_child" class="div_child card p-3 bg-dark text-white">
@@ -67,6 +86,8 @@ Search
       <button id="Copy_Table_Btn" type="button" class="Copy_Btn btn btn-danger ">
         <b>Download <span><img style="height: 25px;width:25px;" src="{% static 'assets/downloading.png'%}"></span> </b>
   </div>  
+
+  {% endif %}
 
   <div id="Table_Div" class="div_parent p-1">
     <p class="card-title" style="text-align:left; margin: 0% 0% 0% 13%;"><b>Table :- </b></p>
@@ -100,6 +121,19 @@ Search
 
 
 <script>
+
+  //Open Settings
+
+  open_settings_section = document.getElementById("Open_Settings")
+  open_settings_section.hidden = true
+  function open_settings(){
+    if(open_settings_section.hidden){
+      open_settings_section.hidden = false
+    }else{
+      open_settings_section.hidden = true
+    }
+    
+  }
 
   // Adding Listners for Loading Spinner after Form Submit !
   function show_spinner(){
