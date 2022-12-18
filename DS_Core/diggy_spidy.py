@@ -231,20 +231,20 @@ class DiggySpidy:
 						return True
 					else:
 						print('[-] Sorry, you are not using tor. !\n')
-						wish = str(input('[?] Do you wish to scrap web without tor ? [y/n]')).lower()[0]
-						if wish == 'y':
-							return False #Returning true just to allow scraping without tor.
-						else:
-							print('[-] Exiting ... ')
-							exit(0)
+						# wish = str(input('[?] Do you wish to scrap web without tor ? [y/n]')).lower()[0]
+						# if wish == 'y':
+						# 	return False #Returning true just to allow scraping without tor.
+						# else:
+						# 	print('[-] Exiting ... ')
+						# 	exit(0)
 			except Exception as e:
 				print(f'[-] Failed to verify tor status due to {e} !\n')
-				wish = str(input('[?] Do you wish to scrap web without tor ? [y/n]')).lower()[0]
-				if wish == 'y':
-					return False #Returning true just to allow scraping without tor.
-				else:
-					print('[-] Exiting ... ')
-					exit(0)
+				# wish = str(input('[?] Do you wish to scrap web without tor ? [y/n]')).lower()[0]
+				# if wish == 'y':
+				# 	return False #Returning true just to allow scraping without tor.
+				# else:
+				# 	print('[-] Exiting ... ')
+				# 	exit(0)
 		
 		return False
 

@@ -19,9 +19,12 @@ RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
 
 ENV PYTHONUNBUFFERED=1
 
+#Starting tor 
+RUN service tor restart
+
 # Server
 EXPOSE 8000
 STOPSIGNAL SIGINT
-ENTRYPOINT ["python", "./WebApp/manage.py"]
+ENTRYPOINT ["python", "manage.py"]
 
 CMD ["runserver", "0.0.0.0:8000"]
