@@ -17,7 +17,7 @@ def home(response):
     if response.method == "POST":
         link = response.POST.get('link')
 
-        # do_render_html = response.POST.get('do_render_html')
+        do_render_html = response.POST.get('do_render_html')
         
         print(f'[+] do_render_html :- {do_render_html}')
 

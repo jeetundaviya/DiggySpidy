@@ -36,7 +36,6 @@ body {
 		font-family: 'Coda';
 		font-size: 300%;
 		font-weight: bold;
-		margin: 1%;
 		text-transform: uppercase;
 		text-align: center;
 		letter-spacing: 5px;
@@ -50,46 +49,15 @@ body {
 	.navbar a:hover {
 		text-decoration: none;
 		font-size: 20px;
-	}
-
-.input-group {
-	width: 75% !important;
-	margin: 1% auto 3% !important;
-}
-
-.btn-primary {
-	border-radius: 0px 5px 5px 0px !important;
-}
+	}	
 
 h4 {
 	margin: 3% !important;
 	font-weight: bold !important;
 }
 
-.progress-wrapper {
-	margin: auto;
-	width: 75%;
-}
-
-#progress-bar {
-	border-radius: 10px;
-}
-
 .container {
-	margin-top: 4%;
-	width: 100%;
-}
-
-#progress-bar-message {
-	text-align: center;
-	width: 60%;
-	font-size: 1.25rem;
-	margin: auto;
-	margin-top: 2%;
-	color: #cb0e0e;
-	background-color: #cce5ff;
-	border-color: #b8daff;
-	border-radius: 0.25rem;
+  margin: 0 auto;
 }
 
 form > p {
@@ -100,18 +68,16 @@ form > p {
 
 .card {
 	border-radius: 15px !important;
-	background-color: rgb(197, 105, 105) !important;
 	margin: 3% 7%;
 	box-shadow: 4px 4px 6px 0 rgba(0, 0, 0, 0.3), -2px -2px 3px 0 rgba(255, 255, 255, 0.3);
 	border: 3px solid var(--currentColor) !important;
 	backdrop-filter: blur( 4px );
+	background-color: #171720 !important;
 }
 
 .card-header {
-	background-color: rgb(151, 18, 18) !important;
 	padding: 1% 2% !important;
 	border-radius: 15px !important;
-	color: white;
 	font-size: 200%;
 	font-family: 'Roboto';
 	font-weight: bold;
@@ -187,7 +153,34 @@ form > p {
 	}
   }
   
-  #settings_icon:hover{
+
+  #settings_section{
+	display: flex;
+	width: 60px;
+	height: 60px;
+	border-radius: 30px;
+	margin: 3% 3% 3% 0%;
+	background-color: black;
+	border: 5px solid rgb(174, 10, 10);
+	text-align: center;
+	align-items: center;
+	transition: all 0.2s ease-in-out;
+  }
+
+  #settings_section:hover{
+
+	background-color:rgb(174, 10, 10);
+	color: rgba(255, 255, 255, 1);
+	box-shadow: 0 5px 15px rgb(174, 10, 10);
+  }
+
+  #settings_icon{
+  	width: 40px;
+	height: 40px;
+	margin: auto;
+  }
+
+  #settings_icon:active{
 	animation: settings_icon 2s infinite linear;
   }
 
@@ -198,4 +191,68 @@ form > p {
 	to {
 	  transform: rotate(359deg);
 	}
+  }
+
+
+  #Form_Div_Card{
+	background-color: #171720 !important;
+	color: #171720 !important;
+  }
+
+  #Link_form{
+	background-color: #171720 !important;
+	color: #171720 !important;
+  }
+
+  input[type=text]{
+	color: #171720 !important;
+	border-radius: 25px;
+	border: 5px solid rgb(174, 10, 10);
+    padding: 20px; 
+	margin: 3% 3% 3% 3%;
+    width: 60%;
+    height: 50px;
+  }
+
+  input[type=text]:hover{
+	color: rgba(255, 255, 255, 1);
+	box-shadow: 0 5px 15px rgb(174, 10, 10);
+  }
+
+  input[type=checkbox]{
+	width: 50px;
+	height: 50px;
+	border-radius: 25px;
+	border: 5px solid rgb(174, 10, 10);
+	/* padding: 20px;  */
+	margin: 3% 3% 3% 0%;
+  }
+
+  #Submit_Link_Btn{
+	border-radius: 25px;
+	padding: 0% 0.5%;
+	border-radius: 30px;
+	margin: 3% 3% 3% 0%;
+	width: auto;
+	background-color: #171720;
+	color: white;
+	border: 5px solid rgb(174, 10, 10);
+	transition: all 0.2s ease-in-out;
+  }
+
+  #Submit_Link_Btn:hover{
+	background-color: rgb(174, 10, 10);
+	font-weight: bolder;
+	-webkit-transition: color 3s linear;
+	-moz-transition: color 3s linear;
+	-ms-transition: color 3s linear;
+	-o-transition: color 3s linear;
+	transition: color 3s linear;
+	color: rgba(255, 255, 255, 1);
+	box-shadow: 0 5px 15px rgb(174, 10, 10);
+  }
+
+  .input-group{
+	text-align: center;
+	vertical-align: middle;
   }

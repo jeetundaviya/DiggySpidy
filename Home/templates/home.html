@@ -7,34 +7,27 @@ Search
 
 {% block Enter_URL %}
 
-<form class="" name="link_form" onsubmit="return show_spinner()" action="{% url 'home' %}" method="post">
+<div id="#Link_form_Div_Card" class="card" style="color:black ;" >
+
+<form id="#Link_form" name="link_form" onsubmit="return show_spinner()" action="{% url 'home' %}" method="post">
     {% csrf_token %}
+    <div class="row justify-content-center">
+      <input type="text" name="link" value="" placeholder="Drop a Website URL" autocomplete="off">
 
-    <p style="text-align:left; margin: 5% 13% 0% 13%;">Drop a Website URL</p>
-    <div class="input-group">
-        <div class="input-group-prepend">
-            <span class="input-group-text">Enter Link</span>
-        </div>
+      <input hidden="true" type="checkbox" name="do_render_html" value="yes" checked="true">
 
-        <input type="text" class="form-control" name="link" value="" placeholder="Drop a Website URL" autocomplete="off">
 
-        <div class="input-group-prepend">
-          <span style="background-color: green;" class="input-group-text">
-            <b id="settings_text" hidden="true" >Settings</b>
-          <img id="settings_icon" style="height:25px;width:25px;" onmouseleave="hide_settings_text()" onmouseover="expand_settings_text()" src="{% static 'assets/setting.png'%}"/>
-          <!-- On click of this button A pop form should pop-up for setting the scraping mode and other configurations and it will be saved to the database for future refrence ! -->
-        </span>
+      <div id="settings_section">
+      <img id="settings_icon" src="{% static 'assets/setting.png'%}"/>
+      <!-- On click of this button A pop form should pop-up for setting the scraping mode and other configurations and it will be saved to the database for future refrence ! -->
       </div>
+  
+    <button id="Submit_Link_Btn" type="submit"  name="button_link" value="button_link">Submit Link</button>
 
-        <!-- <input type="checkbox" class="form-control" name="do_render_html" value="yes" checked="true"> -->
-
-        <div class="input-group-append">
-          <button type="submit" data-toggle="modal"  data-target ="#modal" name="button_link" value="button_link" class="btn btn-dark" >Submit Link</button>
-        </div>
     </div>
-
+      
 </form>
-
+</div>
 
     <div id="loading_form_spinner" hidden="true">
       <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script> 
@@ -47,7 +40,7 @@ Search
 
 <div id="result_content">
 
-  {% if ERROR_MSG != "" %}
+  {% if ERROR_MSG %}
   <p style="text-align:left; margin: 5% 13% 0% 13%;"><b>{{ERROR_MSG}}!</b></p>
   {% endif %}
 
@@ -107,14 +100,6 @@ Search
 
 
 <script>
-
-  function hide_settings_text(){
-    document.getElementById("settings_text").hidden = true;
-  }
-
-  function expand_settings_text(){
-    document.getElementById("settings_text").hidden = false;
-  }
 
   // Adding Listners for Loading Spinner after Form Submit !
   function show_spinner(){
