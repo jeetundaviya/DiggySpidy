@@ -6,6 +6,8 @@ warnings.filterwarnings("ignore", category=UserWarning)
 #Colors codes defined for logo
 BLUE, RED, WHITE, YELLOW, GREEN, END = '\33[94m', '\033[91m', '\33[97m', '\33[93m', '\033[32m', '\033[0m'
 
+CWD = os.getcwd()
+
 #region Chrome and ChromeDriver Path
 
 if os.name == 'nt':

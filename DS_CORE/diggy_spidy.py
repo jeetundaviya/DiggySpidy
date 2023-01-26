@@ -1,13 +1,19 @@
 #region  DiggySpidy Imports
-#region Generic and 3rd Party Libraries Imports
-import warnings
-
-from DS_CORE.DS_Config import *
-from DS_CORE.fake_user_agent import FakeUserAgent
+from DS_Config import *
+from fake_user_agent import FakeUserAgent
 # from DS_Core.keyword_box_in_image import KeywordBox
-
 #endregion
 
+#region DS_APIs Imports
+import sys
+import os
+print('[+] CWD :- ',os.getcwd())
+sys.path.append('DS_GET_SCRAPED_DATA_APIs')
+from DS_GET_SCRAPED_DATA_APIs.models import *
+#endregion
+
+#region Generic and 3rd Party Libraries Imports
+import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 import base64
@@ -80,17 +86,6 @@ def get_list_from_file(file):
 		with open(file,'r') as f:
 			return [link.replace('\n','') for link in f.readlines() if len(link) > 1]
 
-class ScrapedLink:
-	def __init__(self,url):
-		self.url = url
-		self.title = ''
-		self.a_tags = 0
-		self.img_tags = 0
-		self.p_tags = 0
-		self.h_tags = 0
-		self.html_text = ''
-		self.website_category = ''
-
 class DiggySpidy:
 
 	def get_driver(self):
@@ -114,7 +109,7 @@ class DiggySpidy:
 		
 		return self.driver
 
-	def load_url_in_driver(self,url,save_to,data_dict):
+	def load_url_in_driver(self,url,save_to,):
 		
 		# self.driver.quit()
 
@@ -132,11 +127,13 @@ class DiggySpidy:
 
 		self.driver.get(f'{url}')
 
-		self.capture_screenshot(url,save_to,data_dict)
+		self.capture_screenshot(url,save_to)
 
 		return self.driver.page_source
 		
-	def capture_screenshot(self,url,save_to,data_dict):
+	def capture_screenshot(self,url,save_to):
+		
+		current_url_model = scrapped_URL_Table.get(url=url)
 
 		screenshot_location = os.path.join(self.screenshot_folder,'screenshot.png')
 		full_screenshot_location = os.path.join(self.screenshot_folder,'screenshot_full.png')
@@ -150,19 +147,21 @@ class DiggySpidy:
 			os.mkdir(f'{self.screenshot_folder}')
 
 		self.driver.get_screenshot_as_file(screenshot_location)
-		data_dict["screenshot_location"] = screenshot_location
+		current_url_model.screenshot = screenshot_location
 
 
 		#Maxmizing window size to scrollable content to take full screenshot !
 		window_size = lambda X: self.driver.execute_script('return document.body.parentNode.scroll'+X)
 		self.driver.set_window_size(window_size('Width'),window_size('Height'))
 		self.driver.get_screenshot_as_file(full_screenshot_location)
-		data_dict["full_screenshot_location"] = full_screenshot_location
+		current_url_model.full_screenshot = full_screenshot_location
 
 		with open(page_pdf_location,'wb') as f:
 			b64_encoded_str = self.driver.print_page()
 			f.write(base64.b64decode(b64_encoded_str))
-			data_dict["page_pdf_location"] = page_pdf_location
+			current_url_model.page_pdf = page_pdf_location
+
+		current_url_model.save()
 
 		#Reseting to max screen size window .
 		self.driver.maximize_window()
@@ -350,6 +349,11 @@ class DiggySpidy:
 			os.mkdir(f'{url_folder_name}')
 				
 	def scrap(self,url,save_to=None):
+
+		# Inlizing the ScapedURL Model
+		current_url_model = scrapped_URL_Table(url=url)
+		current_url_model.save()
+		
 		# keeping at least some mins duration for changing ip
 		if ((time.time()-self.ip_changed_last_time)/60) > self.changing_ip_after_minutes:
 			if self.controller_port_password and len(self.successful_scraped_links) % self.changing_ip_after_number_scarpped_website == 0 and len(self.successful_scraped_links) > 0:
@@ -366,89 +370,54 @@ class DiggySpidy:
 
 		try:
 
-			data_dict = {"url":"NA",
-				"folder_location":"NA",
-				"excel_file_location":"NA",
-				"text":"NA",
-				"html":"NA",
-				"title":"NA",
-				"headings":"NA",
-				"p":"NA",
-				"a_links":"NA",
-				"img_links":"NA",
-				"website_category":"NA",
-				"screenshot_location":"NA",
-				"full_screenshot_location":"NA",
-				"page_pdf_location":"NA"}
-
 			if not self.is_slow_mode:
 				html_content = self.get_res(url)
 			else:
-				html_content = self.load_url_in_driver(url,save_to,data_dict)
+				html_content = self.load_url_in_driver(url,save_to)
 			
 			if html_content:
+				
+				
 
 				html = html_content
-
+				
 				soup = BeautifulSoup(html,'html.parser')
 
 				raw_html = soup.prettify()
+				current_url_model.html = raw_html
+				
+				all_text = soup.get_text()
+				current_url_model.text = all_text
+
+				website_category = WEBSITE_CATEGORY_MODEL.predict([all_text])[0]
+				current_url_model.website_category = website_category
+
 				try:
 					title_text = soup.title.text
 				except AttributeError as e:
 					title_text = ''
+				
+				current_url_model.title = title_text
+				current_url_model.save()
+				#region Insert all parsed tag in the model Tables
 
-				heading_tags = []
-				p_tags = []
-				a_tags = []
-				a_links = []
-				img_tags = []
-				img_links = []	
+				for tag in soup.find_all():
+					tag_table = html_Tag_Table(scrapped_URL_Table=scrapped_URL_Table)
+					
+					tag_table.tag_name = tag.name
+					tag_table.tag_inner_text = tag.text
+					tag_table.raw_tag = tag
+					
+					tag_table.save()
 
-				try:
-					h_lists = [soup.find_all('h'+str(i)) for i in range(1,7)] #Recursive list including all html headings.
-					heading_tags = [h.text for h_list in h_lists for h in h_list] 
-					p_tags = [p.text for p in soup.find_all('p')]
-					a_tags = soup.find_all('a')
-					a_links = self.purify_links(base_url=url,links=self.extract_links_from_tag_attribute(a_tags, 'href')) 	
-					img_tags = soup.find_all('img')
-					img_links = self.purify_links(base_url=url,links=self.extract_links_from_tag_attribute(img_tags, 'src'))	
-				except TypeError:
-						pass
-
-				all_text = soup.get_text()
+				#endregion
 				
 				url_folder_name = self.get_url_folder(url,save_to)
-
-				website_category = WEBSITE_CATEGORY_MODEL.predict([all_text])[0]
-				
-				data_dict["url"]=url
-				data_dict["folder_location"]=url_folder_name
-				data_dict["excel_file_location"]=os.path.join(url_folder_name,only_url+'.xlsx')
-				data_dict["text"]=all_text
-				data_dict["html"]=raw_html
-				data_dict["title"]= title_text
-				data_dict["headings"]= heading_tags
-				data_dict["p"]=p_tags
-				data_dict["a_links"]=a_links
-				data_dict["img_links"]=img_links
-				data_dict["website_category"]=website_category
-
-				current_scraped_url = ScrapedLink(data_dict['url'])
-				current_scraped_url.title = data_dict['title']
-				current_scraped_url.a_tags = data_dict['a_links']
-				current_scraped_url.h_tags = data_dict['headings']
-				current_scraped_url.p_tags = data_dict['p']
-				current_scraped_url.html_text = data_dict['text']
-				current_scraped_url.website_category = data_dict['website_category']
-
-				self.successful_scraped_links.append(current_scraped_url)
 
 				self.update_analysis_table()
 
 				self.print_live_updates()
 
-				pd.DataFrame().from_dict(data_dict,orient='index').transpose().to_excel(os.path.join(url_folder_name,only_url+'.xlsx'),index=False)
 
 				if self.must_have_words:
 					if self.is_must_have_words_in_textual_data(only_url=only_url,data=all_text):
