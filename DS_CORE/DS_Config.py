@@ -10,10 +10,10 @@ BLUE, RED, WHITE, YELLOW, GREEN, END = '\33[94m', '\033[91m', '\33[97m', '\33[93
 
 if os.name == 'nt':
     CHROME_BINARY_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-    CHROME_DRIVER_PATH = os.path.join('DS_Core',os.path.join("Required_Binaries","win_chromedriver.exe"))
+    CHROME_DRIVER_PATH = os.path.join('DS_CORE',os.path.join("Required_Binaries","win_chromedriver.exe"))
 else:
     CHROME_BINARY_PATH = "/usr/bin/google-chrome"
-    CHROME_DRIVER_PATH = os.path.join('DS_Core',os.path.join("Required_Binaries","linux_chromedriver"))
+    CHROME_DRIVER_PATH = os.path.join('DS_CORE',os.path.join("Required_Binaries","linux_chromedriver"))
 #endregion
 
 #region Proxy Configuration
@@ -74,18 +74,21 @@ KEYWORD_PROOF_REQUIRED = False
 
 #region Output folder
 '''At OUTPUT_SAVING_PATH location the scrapped files will be saved.'''
-OUTPUT_SAVING_PATH = os.path.join(os.path.join("DS_Core",'saved_data'))
+OUTPUT_SAVING_PATH = os.path.join(os.path.join("DS_CORE",'saved_data'))
 #endregion
 
-#region Wordlist file locations
+#region File locations
 '''STOPWORDS_IN_LINK_FILE contains words which you don't want in your scraped links for further scraping.'''
-STOPWORDS_IN_LINK_FILE = os.path.join('DS_Core',os.path.join('Wordlist','stopwords_in_link_file.txt'))
+STOPWORDS_IN_LINK_FILE = os.path.join('DS_CORE',os.path.join('Wordlist','stopwords_in_link_file.txt'))
 
 '''MUST_HAVE_WORDS_IN_LINK_FILE contains words which you want in your scraped links for further scraping.'''
-MUST_HAVE_WORDS_IN_LINK_FILE = os.path.join('DS_Core',os.path.join('Wordlist','must_have_words_in_link_file.txt'))
+MUST_HAVE_WORDS_IN_LINK_FILE = os.path.join('DS_CORE',os.path.join('Wordlist','must_have_words_in_link_file.txt'))
 
 '''MUST_HAVE_WORDS_IN_WEBSITE_TEXT_FILE contains words which you want in website visable text for further scraping.'''
-MUST_HAVE_WORDS_IN_WEBSITE_TEXT_FILE = os.path.join('DS_Core',os.path.join('Wordlist','must_have_words_in_website_text_file.txt'))
+MUST_HAVE_WORDS_IN_WEBSITE_TEXT_FILE = os.path.join('DS_CORE',os.path.join('Wordlist','must_have_words_in_website_text_file.txt'))
+
+'''FAKE_USERAGENT_LIST_FILE conatains bunch of the supported user-agents of diffrent browsers by which we cna fake the identity'''
+FAKE_USERAGENT_LIST_FILE = os.path.join(os.path.join("DS_CORE",'UserAgentList'),'fake_user_agent_list.txt')
 #endregion
 
 #region How to enable TOR Controller Port.
@@ -163,4 +166,4 @@ CHANGE_IP_AFTER_MINUTES = 5
 #endregion
 
 #Loading Website Category Detection Model
-WEBSITE_CATEGORY_MODEL = joblib.load(os.path.join(os.path.join("DS_Core",'NLP'),'website_category_detection_model.joblib'))
+WEBSITE_CATEGORY_MODEL = joblib.load(os.path.join(os.path.join("DS_CORE",'NLP'),'website_category_detection_model.joblib'))

@@ -1,6 +1,6 @@
 import os
 from KeywordBasedSearch.SearchEngines import *
-from dg_config import *
+from DS_CORE.DS_Config import *
 from fake_user_agent import LATEST_CHROME_USERAGENT
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options

@@ -2,8 +2,8 @@
 #region Generic and 3rd Party Libraries Imports
 import warnings
 
-from DS_Core.dg_config import *
-from DS_Core.fake_user_agent import FakeUserAgent
+from DS_CORE.DS_Config import *
+from DS_CORE.fake_user_agent import FakeUserAgent
 # from DS_Core.keyword_box_in_image import KeywordBox
 
 #endregion
