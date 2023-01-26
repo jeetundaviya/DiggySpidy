@@ -1,7 +1,7 @@
 # All Fake User-Agent are taken from http://useragentstring.com/pages/useragentstring.php?typ=Browser
 
 import random,os
-from DS_Config import FAKE_USERAGENT_LIST_FILE
+from DS_CORE.DS_Config import FAKE_USERAGENT_LIST_FILE
 
 LATEST_CHROME_USERAGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36'
 

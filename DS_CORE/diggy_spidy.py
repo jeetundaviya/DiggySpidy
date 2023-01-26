@@ -1,15 +1,13 @@
 #region  DiggySpidy Imports
-from DS_Config import *
-from fake_user_agent import FakeUserAgent
+from DS_CORE.DS_Config import *
+from DS_CORE.fake_user_agent import FakeUserAgent
 # from DS_Core.keyword_box_in_image import KeywordBox
 #endregion
 
 #region DS_APIs Imports
 import sys
 import os
-print('[+] CWD :- ',os.getcwd())
-sys.path.append('DS_GET_SCRAPED_DATA_APIs')
-from DS_GET_SCRAPED_DATA_APIs.models import *
+from DS_CORE.models import *
 #endregion
 
 #region Generic and 3rd Party Libraries Imports
@@ -48,9 +46,7 @@ def is_connected_to_internet():
 		return True
 	except Exception as e:
 		print(f'[-] Unable to connect to internet due to {e} !\n[-] Please check your internet connection !')
-		print('[-] Exiting ...')
-		exit(0)	
-	return False
+		return False
 
 def clear_screen():
 	if os.name == 'nt':
@@ -351,7 +347,12 @@ class DiggySpidy:
 	def scrap(self,url,save_to=None):
 
 		# Inlizing the ScapedURL Model
-		current_url_model = scrapped_URL_Table(url=url)
+
+		# Deleting the older details for the same url
+		scrapped_URL_Table.objects.filter(base_url=url).delete()
+
+		current_url_model = scrapped_URL_Table(base_url=url)
+		current_url_model.url_rendered = self.is_slow_mode
 		current_url_model.save()
 		
 		# keeping at least some mins duration for changing ip
@@ -377,8 +378,6 @@ class DiggySpidy:
 			
 			if html_content:
 				
-				
-
 				html = html_content
 				
 				soup = BeautifulSoup(html,'html.parser')
@@ -402,14 +401,22 @@ class DiggySpidy:
 				#region Insert all parsed tag in the model Tables
 
 				for tag in soup.find_all():
-					tag_table = html_Tag_Table(scrapped_URL_Table=scrapped_URL_Table)
-					
-					tag_table.tag_name = tag.name
-					tag_table.tag_inner_text = tag.text
-					tag_table.raw_tag = tag
-					
-					tag_table.save()
-
+					try:
+						tag_table = html_Tag_Table(scrapped_URL_Table=current_url_model)
+						
+						tag_table.tag_name = tag.name
+						tag_table.tag_inner_text = tag.text
+						tag_table.raw_tag = str(tag)
+						
+						tag_table.save()
+						
+						for arg_key,arg_value in tag.attrs.items():
+							arg_table = html_Tag_Arg_Table(scrapped_URL_Table=current_url_model,html_Tag_Table=tag_table)
+							arg_table.arg_name = arg_key
+							arg_table.arg_value = str(arg_value)
+							arg_table.save()
+					except Exception as ex:
+						print(f'[-] Execption occured in saving table due to {ex}')
 				#endregion
 				
 				url_folder_name = self.get_url_folder(url,save_to)
