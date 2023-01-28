@@ -102,7 +102,7 @@ class DiggySpidy:
 			self.driver = webdriver.Chrome(service=Service(CHROME_DRIVER_PATH),options=self.driver_options)
 			
 			self.driver.maximize_window() # Maximizing window by default
-			print('[+] Successfullg go access to driver')
+			print('[+] Successfully got access to driver')
 			return self.driver
 		except Exception as ex:
 			print(f'[-] Failed to get the driver due to {ex}')
@@ -125,41 +125,20 @@ class DiggySpidy:
 
 			self.driver.get(f'{url}')
 
-			self.capture_screenshot(url,current_url_model)
+			self.capture_screenshot(current_url_model)
 			print(f'[+] Successfully renered {url} in driver')
 			return self.driver.page_source
 		except Exception as ex:
 			print(f'[-] Failed to load the {url} in driver due to {ex}')
 
-	def capture_screenshot(self,url,current_url_model):
+	def capture_screenshot(self,current_url_model):
 
-		# screenshot_location = os.path.join(self.screenshot_folder,'screenshot.png')
-		# full_screenshot_location = os.path.join(self.screenshot_folder,'screenshot_full.png')
-		# page_pdf_location = os.path.join(self.screenshot_folder,'full_page.pdf')
-
-		# url_folder = self.get_url_folder(url,save_to)
-
-		# self.screenshot_folder = os.path.join(url_folder,'screenshots')
-
-		# if not os.path.isdir(self.screenshot_folder):
-		# 	os.mkdir(f'{self.screenshot_folder}')
-
-		
-
-		# self.driver.get_screenshot_as_file(screenshot_location)
 		current_url_model.screenshot = self.driver.get_screenshot_as_png()
-
 
 		#Maxmizing window size to scrollable content to take full screenshot !
 		window_size = lambda X: self.driver.execute_script('return document.body.parentNode.scroll'+X)
 		self.driver.set_window_size(window_size('Width'),window_size('Height'))
-		# self.driver.get_screenshot_as_file(full_screenshot_location)
 		current_url_model.full_screenshot = self.driver.get_screenshot_as_png()
-
-
-		# with open(page_pdf_location,'wb') as f:
-		# 	b64_encoded_str = self.driver.print_page()
-		# 	f.write(base64.b64decode(b64_encoded_str))
 
 		current_url_model.page_pdf = base64.b64decode(self.driver.print_page()) # This b64 encoded string so when you use it decode it with b64 and then save it to .pdf file. 
 
@@ -276,47 +255,12 @@ class DiggySpidy:
 			return res.content
 		# 	else:
 		# 		self.failed_scraped_links.append(url)
-		# 		self.errors.append(f'[-] Unable to scrape {url} ({res.status_code})')
+		# 		print(f'[-] Unable to scrape {url} ({res.status_code})')
 		# except Exception as e:
 		# 	self.failed_scraped_links.append(url)
-		# 	self.errors.append(f'[-] Unable to scrape {url} [{e}]')
+		# 	print(f'[-] Unable to scrape {url} [{e}]')
 		return False
 		
-	def extract_links_from_tag_attribute(self,tag_list,attribute):
-		
-		links = []
-
-		fetch_link = lambda tag,attribute: tag[attribute]
-		
-		for tag in tag_list:
-			try:
-				links.append(fetch_link(tag, attribute))
-			except Exception as e:
-				continue
-
-		return links
-
-	def save_file(self,file_name,folder_location=None,data=None,data_list=None):
-
-		if folder_location == None:
-			folder_location = self.default_output_folder_location
-
-		file = os.path.join(folder_location,file_name)
-
-		if data != None:
-			with open(file,'wb') as f:
-				f.write(data)
-			return True
-		elif data_list != None:
-			with open(file,'w') as f:
-				f.writelines([data+'\n' for data in data_list])
-			return True
-		else:
-			print('[-] Data or DataList not provided !')
-			return False
-
-	def get_current_scraped_list(self): #wrote this function for avoid code repetation everytime for gettin only links!
-		return [link.url for link in self.successful_scraped_links]
 	
 	def get_current_scraped_dict(self): #wrote this function for avoid code repetation everytime for gettin only links!
 		scraped_links_dict = {}
@@ -425,34 +369,14 @@ class DiggySpidy:
 						print(f'[-] Execption occured in saving table due to {ex}')
 				#endregion
 				
-				url_folder_name = self.get_url_folder(url,save_to)
-
-				self.update_analysis_table()
-
-				self.print_live_updates()
-
-
 				if self.must_have_words:
 					if self.is_must_have_words_in_textual_data(only_url=only_url,data=all_text):
 						self.must_have_words_filtered_links.append(url)
 
-				#Saving all data in a excel format for scrapped link.
-				pd.DataFrame().from_dict(ds_obj.get_current_scraped_dict(),orient='index').transpose().to_excel(os.path.join(self.extra_data_folder,f'Last_Session_All_Scrapped_Links_Data.xlsx'),index=False)
+				return current_url_model
 
-				self.save_file(file_name='successful_scraped_links.txt',folder_location=self.extra_data_folder,data_list=self.get_current_scraped_list())
-				self.save_file(file_name='unique_links.txt',folder_location=self.extra_data_folder,data_list=self.unique_links)
-				self.save_file(file_name='must_have_words_links.txt',folder_location=self.extra_data_folder,data_list=self.must_have_words_filtered_links)
-				self.save_file(file_name='error.txt',folder_location=self.extra_data_folder,data_list=self.errors)
-
-				return data_dict
 		except Exception as e:
-			self.failed_scraped_links.append(url)
-
-			if len(os.listdir(self.get_url_folder(url,save_to))) == 0: #Deleting folder if empty !
-				os.rmdir(self.get_url_folder(url,save_to))
-
-			self.errors.append(f'[-] Unable to scrape {url} [{e}]')
-			self.save_file(file_name='error.txt',folder_location=self.extra_data_folder,data_list=self.errors)
+			print(f'[-] Failed in scrap due to {e}')
 
 	def are_any_words_in_link(self,link,words):
 		if words:
@@ -469,7 +393,6 @@ class DiggySpidy:
 		for word in must_have_words:
 			if (word.lower() in data) or (data in word.lower()):  
 				try:
-					self.errors.append('[-] Currently KEYWORD_PROOF_REQUIRED with OCR is disabled (due to easy-ocr dependency -> torch have no dependency for py11) !')
 					print('[-] Currently KEYWORD_PROOF_REQUIRED with OCR is disabled (due to easy-ocr dependency -> torch have no dependency for py11) !')
 					# if KEYWORD_PROOF_REQUIRED and self.is_slow_mode and self.screenshot_folder:
 					# 	with open(os.path.join(self.screenshot_folder,'screenshot_full.png'),'rb') as f:
@@ -494,83 +417,46 @@ class DiggySpidy:
 
 				
 				except Exception as e:
-					self.errors.append(f'[-] Unable to save screenshot of {only_url} for word {word} due to {e} error.')
+					print(f'[-] Unable to save screenshot of {only_url} for word {word} due to {e} error.')
 				
 				return True
 		return False	
 
-	def print_live_updates(self):
-		
-		minify_url = lambda url : url if len(url) < 50 else url[:50]+'...'
-		success_count = f'[+] Success count : {len(self.successful_scraped_links)}'
-		fail_count = f'[+] Fail count : {len(self.failed_scraped_links)}'
-		link_count = f'[+] Links found : {len(self.unique_links)}'
-		latest_website = f'[+] Latest website : {minify_url(self.successful_scraped_links[-1].url)}'
-		website_category = f'[+] Website Category : {self.successful_scraped_links[-1].website_category}'
+	def get_links_from_a_tags(self,base_url_model):
+		hrefs = []
+		for arg in html_Tag_Arg_Table.objects.filter(scrapped_URL_Table=base_url_model,arg_name='href'):
+			hrefs.append(arg.arg_value)
+		return hrefs
 
-		if self.verbose_output:
-			clear_screen()
+	def is_link_scraped(self,link:str):
+		return False if scrapped_URL_Table.objects.filter(base_url=link).count() == 0 or scrapped_URL_Table.objects.filter(base_url=f'{link}/').count() == 0 else True
 
-			print_logo()
 
-			print(f'{success_count} {fail_count} {link_count}',end='\n\n')
-			if self.must_have_words_filtered_links:
-				print(f'[+] Desired links count : {len(self.must_have_words_filtered_links)}',end='\n\n')
-			print(f'[+] Current crawling depth : {self.current_crawl_depth}',end='\n\n')
-			
-			print(f'{latest_website}',end='\n\n')
-			
-			print(f'{website_category}',end='\n\n')
-
-			if self.errors:	
-				print(f'[+] Last error : {self.errors[-1]}',end='\n\n')
-			
-			print(self.analysis_table)
-		else:
-			live_updates = f' {success_count} {fail_count} {link_count} {latest_website}'
-			
-			print(live_updates,end='\r')
-
-	def update_analysis_table(self):
-		
-		minify_url = lambda url: url if len(url) < 50 else url[:50]+'...'
-
-		self.analysis_table = PrettyTable(field_names=['URL','Links Found','Website Category'])
-			
-		for link in self.successful_scraped_links[-TABLE_ROW_NUMBER:]:
-			self.analysis_table.add_row([minify_url(link.url),len(link.a_tags),link.website_category])
-
-	def crawl(self,start_url,crawl_depth=0,save_to=None):
-
+	def crawl(self,start_url,crawl_depth=0):
 		if crawl_depth > self.crawl_depth: 
 			return
 
 		self.current_crawl_depth = crawl_depth
 
 		if len(self.successful_scraped_links) >= self.max_crawl_count:
-			self.save_file(file_name='successful_scraped_links.txt',folder_location=self.extra_data_folder,data_list=self.get_current_scraped_list())
-			self.save_file(file_name='unique_links.txt',folder_location=self.extra_data_folder,data_list=self.unique_links)
 			print('\n[-] Reached to max crawl count!')
-			print('[-] Exiting ...')
-			exit(0)
+			print('[-] Stopping ...')
+			return
 
-		if save_to == None:
-			save_to = self.default_output_folder_location
-
-		start_data_dic = self.scrap(start_url,save_to)
+		start_url_model = self.scrap(start_url)
 		
-		if start_data_dic:
+		start_url_model_base_url = start_url_model.base_url
+
+		if start_url_model_base_url:
 			
-			links = start_data_dic['a_links']
-			
-			folder_location = start_data_dic['folder_location']
+			links = self.get_links_from_a_tags(start_url_model)
 
 			filterd_links = []
 
 			for link in links:
-				if ('.' in link):
-					if link not in self.get_current_scraped_list() or link+'/' not in self.get_current_scraped_list():
-						if (link not in self.unique_links):
+				if '.' in link:
+					if not self.is_link_scraped(link):
+						if link not in self.unique_links:
 							if not self.includes_stop_words(link):
 								if self.includes_must_have_words(link):
 									if CRAWL_IN_DOMAIN and '.onion' not in link: # Don't apply crawl in domain for onion links
@@ -579,17 +465,17 @@ class DiggySpidy:
 									filterd_links.append(link)
 		
 			self.unique_links += filterd_links
-			
+			print(filterd_links)
 			for link in filterd_links:
 				try:
 					if (len(threading.enumerate())-1) > MAX_THREAD_COUNT:
-						Thread(target=self.crawl,args=(link,crawl_depth+1,folder_location,)).start()
+						Thread(target=self.crawl,args=(link,crawl_depth+1,)).start()
 					else:
-						self.crawl(link,crawl_depth=crawl_depth+1,save_to=folder_location)
+						self.crawl(link,crawl_depth=crawl_depth+1)
 					
 					time.sleep(self.pause_crawl_duration)
 				except Exception as e:
-					self.errors.append(f"[-] Unable to crawl {link} (E:{e})")
+					print(f"[-] Unable to crawl {link} (E:{e})")
 					self.failed_scraped_links.append(start_url)	
 
 	def __init__(self):
@@ -785,11 +671,6 @@ if __name__ == '__main__':
 			else:
 				ds_obj.scrap(url)
 	except KeyboardInterrupt:
-		ds_obj.save_file(file_name='successful_scraped_links.txt',folder_location=ds_obj.extra_data_folder,data_list=ds_obj.get_current_scraped_list())
-		ds_obj.save_file(file_name='unique_links.txt',folder_location=ds_obj.extra_data_folder,data_list=ds_obj.unique_links)
-
-		ds_obj.print_live_updates()
-
 		#Saving all data in a excel format for scrapped link.
 		pd.DataFrame().from_dict(ds_obj.get_current_scraped_dict(),orient='index').transpose().to_excel(os.path.join(ds_obj.extra_data_folder,f'All_Scrapped_Data_{round(time.time())}.xlsx'),index=False)
 			
