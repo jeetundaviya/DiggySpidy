@@ -1,4 +1,11 @@
 from django.db import models
+from django.conf import settings
+import os
+
+def get_save_path(instance,filename):
+    clear_url = instance.base_url.replace('https://','_').replace('http://','_').replace('.','_').replace(':','_').replace('/','_').replace('?','_').replace('+','_').replace('-','_')
+    url_dir = f'saved_data/{clear_url}'
+    return f'{url_dir}/{filename}'
 
 class scrapped_URL_Table(models.Model):
     base_url = models.TextField(primary_key=True)
@@ -8,9 +15,9 @@ class scrapped_URL_Table(models.Model):
     text = models.TextField(blank=True,null=True,default="NA")
     html = models.TextField(blank=True,null=True,default="NA")
     website_category = models.CharField(max_length=50,default="NA")
-    screenshot = models.BinaryField(blank=True,null=True,default=b"NA")
-    full_screenshot = models.BinaryField(blank=True,null=True,default=b"NA")
-    page_pdf = models.BinaryField(blank=True,null=True,default=b"NA")
+    screenshot = models.BinaryField(editable=True,blank=True,null=True,default=b'NA')
+    full_screenshot = models.BinaryField(editable=True,blank=True,null=True,default=b'NA')
+    page_pdf = models.BinaryField(editable=True,blank=True,null=True,default=b'NA')
 
     def __str__(self):
         return f'{self.base_url} ({self.last_scraped_time})'

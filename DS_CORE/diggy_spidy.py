@@ -85,77 +85,83 @@ def get_list_from_file(file):
 class DiggySpidy:
 
 	def get_driver(self):
+		try:
+			self.driver_options = webdriver.ChromeOptions()
 
-		self.driver_options = webdriver.ChromeOptions()
+			if self.must_torrify:
+				if self.is_tor_connected():
+					self.driver_options.add_argument(f'--proxy-server={TOR_PROXY}')
+			
+			# Opening Chrome in Headless mode (in background)
+			self.driver_options.add_argument('--headless')
+			self.driver_options.add_argument('--no-sandbox')
+			
+			# Disabling the logging from chrome-driver
+			self.driver_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-		if self.must_torrify:
-			if self.is_tor_connected():
-				self.driver_options.add_argument(f'--proxy-server={TOR_PROXY}')
+			self.driver = webdriver.Chrome(service=Service(CHROME_DRIVER_PATH),options=self.driver_options)
+			
+			self.driver.maximize_window() # Maximizing window by default
+			print('[+] Successfullg go access to driver')
+			return self.driver
+		except Exception as ex:
+			print(f'[-] Failed to get the driver due to {ex}')
+
+	def load_url_in_driver(self,url,current_url_model):
+		try:
+			# self.driver.quit()
+			print(f'[+] Trying to render {url} in driver')
+			if self.use_random_fake_user_agent:
+				self.driver_options.add_argument(f'user-agent={self.fake_user_agent.get_random_fake_user_agent()}')
+
+			self.get_driver()
+
+			if 'http' not in url:
+				url='http://'+url
+
+			self.driver.implicitly_wait(self.max_response_time) #It will at max wait for 30 seconds for loading website.
+			
+			self.driver.delete_all_cookies()
+
+			self.driver.get(f'{url}')
+
+			self.capture_screenshot(url,current_url_model)
+			print(f'[+] Successfully renered {url} in driver')
+			return self.driver.page_source
+		except Exception as ex:
+			print(f'[-] Failed to load the {url} in driver due to {ex}')
+
+	def capture_screenshot(self,url,current_url_model):
+
+		# screenshot_location = os.path.join(self.screenshot_folder,'screenshot.png')
+		# full_screenshot_location = os.path.join(self.screenshot_folder,'screenshot_full.png')
+		# page_pdf_location = os.path.join(self.screenshot_folder,'full_page.pdf')
+
+		# url_folder = self.get_url_folder(url,save_to)
+
+		# self.screenshot_folder = os.path.join(url_folder,'screenshots')
+
+		# if not os.path.isdir(self.screenshot_folder):
+		# 	os.mkdir(f'{self.screenshot_folder}')
+
 		
-		# Opening Chrome in Headless mode (in background)
-		self.driver_options.add_argument('--headless')
-		self.driver_options.add_argument('--no-sandbox')
-		
-		# Disabling the logging from chrome-driver
-		self.driver_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-		self.driver = webdriver.Chrome(service=Service(CHROME_DRIVER_PATH),options=self.driver_options)
-		
-		self.driver.maximize_window() # Maximizing window by default
-		
-		return self.driver
-
-	def load_url_in_driver(self,url,save_to,):
-		
-		# self.driver.quit()
-
-		if self.use_random_fake_user_agent:
-			self.driver_options.add_argument(f'user-agent={self.fake_user_agent.get_random_fake_user_agent()}')
-
-		self.get_driver()
-
-		if 'http' not in url:
-			url='http://'+url
-
-		self.driver.implicitly_wait(self.max_response_time) #It will at max wait for 30 seconds for loading website.
-		
-		self.driver.delete_all_cookies()
-
-		self.driver.get(f'{url}')
-
-		self.capture_screenshot(url,save_to)
-
-		return self.driver.page_source
-		
-	def capture_screenshot(self,url,save_to):
-		
-		current_url_model = scrapped_URL_Table.get(url=url)
-
-		screenshot_location = os.path.join(self.screenshot_folder,'screenshot.png')
-		full_screenshot_location = os.path.join(self.screenshot_folder,'screenshot_full.png')
-		page_pdf_location = os.path.join(self.screenshot_folder,'full_page.pdf')
-
-		url_folder = self.get_url_folder(url,save_to)
-
-		self.screenshot_folder = os.path.join(url_folder,'screenshots')
-
-		if not os.path.isdir(self.screenshot_folder):
-			os.mkdir(f'{self.screenshot_folder}')
-
-		self.driver.get_screenshot_as_file(screenshot_location)
-		current_url_model.screenshot = screenshot_location
+		# self.driver.get_screenshot_as_file(screenshot_location)
+		current_url_model.screenshot = self.driver.get_screenshot_as_png()
 
 
 		#Maxmizing window size to scrollable content to take full screenshot !
 		window_size = lambda X: self.driver.execute_script('return document.body.parentNode.scroll'+X)
 		self.driver.set_window_size(window_size('Width'),window_size('Height'))
-		self.driver.get_screenshot_as_file(full_screenshot_location)
-		current_url_model.full_screenshot = full_screenshot_location
+		# self.driver.get_screenshot_as_file(full_screenshot_location)
+		current_url_model.full_screenshot = self.driver.get_screenshot_as_png()
 
-		with open(page_pdf_location,'wb') as f:
-			b64_encoded_str = self.driver.print_page()
-			f.write(base64.b64decode(b64_encoded_str))
-			current_url_model.page_pdf = page_pdf_location
+
+		# with open(page_pdf_location,'wb') as f:
+		# 	b64_encoded_str = self.driver.print_page()
+		# 	f.write(base64.b64decode(b64_encoded_str))
+
+		current_url_model.page_pdf = base64.b64decode(self.driver.print_page()) # This b64 encoded string so when you use it decode it with b64 and then save it to .pdf file. 
 
 		current_url_model.save()
 
@@ -374,7 +380,7 @@ class DiggySpidy:
 			if not self.is_slow_mode:
 				html_content = self.get_res(url)
 			else:
-				html_content = self.load_url_in_driver(url,save_to)
+				html_content = self.load_url_in_driver(url,current_url_model)
 			
 			if html_content:
 				

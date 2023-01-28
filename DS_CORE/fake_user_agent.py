@@ -9,7 +9,7 @@ class FakeUserAgent:
     def __init__(self):
         
         self.FakeUserAgentList = []
-        print('[+] CWD',os.getcwd())
+        
         with open(FAKE_USERAGENT_LIST_FILE,'r') as f:
             self.FakeUserAgentList = f.readlines()
         
