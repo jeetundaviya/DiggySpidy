@@ -298,6 +298,16 @@ class DiggySpidy:
 
 		# Inlizing the ScapedURL Model
 		
+		if self.is_link_scraped(url):
+			if SCRAP_FRESH:
+				# Deleting the older details for the same url
+				scrapped_URL_Table.objects.filter(base_url=url).delete()
+				print(f'{url} is deleted from DB ! As SCRAP_FRESH=True !')
+			else:
+				print(f'{url} is already scraped ! And SCRAP_FRESH=False hence not scraping this link again !')
+				return scrapped_URL_Table.objects.get(base_url=url)
+
+
 		# Deleting the older details for the same url
 		scrapped_URL_Table.objects.filter(base_url=url).delete()
 
@@ -433,14 +443,26 @@ class DiggySpidy:
 		return hrefs
 
 	def is_link_scraped(self,link:str):
-		return False if scrapped_URL_Table.objects.filter(base_url=link).count() == 0 or scrapped_URL_Table.objects.filter(base_url=f'{link}/').count() == 0 else True
+		return False if scrapped_URL_Table.objects.filter(base_url=link).count() == 0 and scrapped_URL_Table.objects.filter(base_url=f'{link}/').count() == 0 else True
 
+	def is_link_crawled(self,link:str):
+		return False if crawl_URL_Table.objects.filter(base_url=link).count() == 0 and crawl_URL_Table.objects.filter(base_url=f'{link}/').count() == 0 else True
 
 	def crawl(self,start_url,seed_url="NA",parent_url="NA",crawl_depth=0):
-		
+
 		seed_url= start_url if seed_url == "NA" else seed_url
 
 		parent_url= start_url if parent_url == "NA" else parent_url
+
+		print(f'{start_url} :- {self.is_link_crawled(start_url)}')
+		if self.is_link_crawled(start_url):
+			if CRAWL_FRESH:
+				# Deleting the older details for the same url
+				crawl_URL_Table.objects.filter(base_url=start_url).delete()
+				print(f'{start_url} is deleted from DB ! As CRAWL_FRESH=True !')
+			else:
+				print(f'{start_url} is already crawled ! And CRAWL_FRESH=False hence not crawling this link again !')
+				return crawl_URL_Table.objects.get(base_url=start_url)
 		
 		if crawl_depth > self.crawl_depth: 
 			return
@@ -460,8 +482,6 @@ class DiggySpidy:
 
 			print(f'[+] Currently crawling {start_url}')
 
-			# Deleting the older details for the same url
-			crawl_URL_Table.objects.filter(base_url=start_url).delete()
 			current_crawl_url_model = crawl_URL_Table(seed_url=seed_url,base_url=start_url,parent_url=parent_url,scrapped_URL_Table=start_url_model,crawl_depth=crawl_depth)			
 			current_crawl_url_model.save() # Only Saving Record if already Scraped the URL !	
 
@@ -471,26 +491,25 @@ class DiggySpidy:
 
 			for link in links:
 				if '.' in link:
-					if not self.is_link_scraped(link):
-						if link not in self.unique_links:
-							if not self.includes_stop_words(link):
-								if self.includes_must_have_words(link):
-									if CRAWL_IN_DOMAIN and '.onion' not in link: # Don't apply crawl in domain for onion links
-										if self.base_url_domain not in link:
-											continue
-									filterd_links.append(link)
+					if link not in self.unique_links:
+						if not self.includes_stop_words(link):
+							if self.includes_must_have_words(link):
+								if CRAWL_IN_DOMAIN and '.onion' not in link: # Don't apply crawl in domain for onion links
+									if self.base_url_domain not in link:
+										continue
+								filterd_links.append(link)
 
 			filterd_links = self.purify_links(start_url_model_base_url,filterd_links)
-
+			
 			self.unique_links += filterd_links
 
 			for link in filterd_links:
 				try:
-					# if (len(threading.enumerate())-1) > MAX_THREAD_COUNT:
-					# 	Thread(target=self.crawl,args=(seed_url,link,crawl_depth+1,)).start()
-					# else:
-					# 	self.crawl(seed_url,link,crawl_depth=crawl_depth+1)
-					self.crawl(seed_url=seed_url,parent_url=start_url,start_url=link,crawl_depth=crawl_depth+1)
+					if (len(threading.enumerate())-1) > MAX_THREAD_COUNT:
+						Thread(target=self.crawl,args=(seed_url,start_url,link,crawl_depth+1,)).start()
+					else:
+						self.crawl(seed_url=seed_url,parent_url=start_url,start_url=link,crawl_depth=crawl_depth+1)
+					# self.crawl(seed_url=seed_url,parent_url=start_url,start_url=link,crawl_depth=crawl_depth+1)
 					time.sleep(self.pause_crawl_duration)
 				except Exception as e:
 					print(f"[-] Unable to crawl {start_url} (E:{e})")

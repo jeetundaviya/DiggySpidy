@@ -42,6 +42,8 @@ TABLE_ROW_NUMBER = 25
 #endregion
 
 #region Crawling options
+CRAWL_FRESH = False
+
 '''Crawler should or should not stay in same domain while crawling.'''
 CRAWL_IN_DOMAIN = False
 
@@ -56,6 +58,8 @@ MAX_THREAD_COUNT = 30
 #endregion
 
 #region Scraping options
+SCRAP_FRESH = False
+
 '''
 Use fake user-agent by calling get_random_fake_user_agent() from fake_user_agent.py .
 
