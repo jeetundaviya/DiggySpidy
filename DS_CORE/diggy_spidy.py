@@ -297,7 +297,7 @@ class DiggySpidy:
 	def scrap(self,url,save_to=None):
 
 		# Inlizing the ScapedURL Model
-
+		
 		# Deleting the older details for the same url
 		scrapped_URL_Table.objects.filter(base_url=url).delete()
 
@@ -315,7 +315,7 @@ class DiggySpidy:
 		if save_to == None:
 			save_to = self.default_output_folder_location
 		
-		self.create_url_folder(url,save_to)
+		# self.create_url_folder(url,save_to)
 
 		only_url = url.replace('http://','').replace('https://','').replace('/', '_').replace('?', '_')
 
@@ -348,25 +348,26 @@ class DiggySpidy:
 				
 				current_url_model.title = title_text
 				current_url_model.save()
+
 				#region Insert all parsed tag in the model Tables
 
-				for tag in soup.find_all():
-					try:
-						tag_table = html_Tag_Table(scrapped_URL_Table=current_url_model)
+				# for tag in soup.find_all():
+				# 	try:
+				# 		tag_table = html_Tag_Table(scrapped_URL_Table=current_url_model)
 						
-						tag_table.tag_name = tag.name
-						tag_table.tag_inner_text = tag.text
-						tag_table.raw_tag = str(tag)
+				# 		tag_table.tag_name = tag.name
+				# 		tag_table.tag_inner_text = tag.text
+				# 		tag_table.raw_tag = str(tag)
 						
-						tag_table.save()
+				# 		tag_table.save()
 						
-						for arg_key,arg_value in tag.attrs.items():
-							arg_table = html_Tag_Arg_Table(scrapped_URL_Table=current_url_model,html_Tag_Table=tag_table)
-							arg_table.arg_name = arg_key
-							arg_table.arg_value = str(arg_value)
-							arg_table.save()
-					except Exception as ex:
-						print(f'[-] Execption occured in saving table due to {ex}')
+				# 		for arg_key,arg_value in tag.attrs.items():
+				# 			arg_table = html_Tag_Arg_Table(scrapped_URL_Table=current_url_model,html_Tag_Table=tag_table)
+				# 			arg_table.arg_name = arg_key
+				# 			arg_table.arg_value = str(arg_value)
+				# 			arg_table.save()
+				# 	except Exception as ex:
+				# 		print(f'[-] Execption occured in saving table due to {ex}')
 				#endregion
 				
 				if self.must_have_words:
@@ -377,6 +378,7 @@ class DiggySpidy:
 
 		except Exception as e:
 			print(f'[-] Failed in scrap due to {e}')
+			scrapped_URL_Table.objects.filter(base_url=url).delete()
 
 	def are_any_words_in_link(self,link,words):
 		if words:
@@ -422,17 +424,24 @@ class DiggySpidy:
 				return True
 		return False	
 
-	def get_links_from_a_tags(self,base_url_model):
+	def get_links_from_a_tags(self,base_url_model_html):
 		hrefs = []
-		for arg in html_Tag_Arg_Table.objects.filter(scrapped_URL_Table=base_url_model,arg_name='href'):
-			hrefs.append(arg.arg_value)
+		soup = BeautifulSoup(base_url_model_html,'html.parser')
+		for a_link in soup.find_all('a'):
+			if 'href' in a_link.attrs.keys():
+				hrefs.append(a_link['href'])
 		return hrefs
 
 	def is_link_scraped(self,link:str):
 		return False if scrapped_URL_Table.objects.filter(base_url=link).count() == 0 or scrapped_URL_Table.objects.filter(base_url=f'{link}/').count() == 0 else True
 
 
-	def crawl(self,start_url,crawl_depth=0):
+	def crawl(self,start_url,seed_url="NA",parent_url="NA",crawl_depth=0):
+		
+		seed_url= start_url if seed_url == "NA" else seed_url
+
+		parent_url= start_url if parent_url == "NA" else parent_url
+		
 		if crawl_depth > self.crawl_depth: 
 			return
 
@@ -444,12 +453,19 @@ class DiggySpidy:
 			return
 
 		start_url_model = self.scrap(start_url)
-		
-		start_url_model_base_url = start_url_model.base_url
 
-		if start_url_model_base_url:
+		if start_url_model:
 			
-			links = self.get_links_from_a_tags(start_url_model)
+			start_url_model_base_url = start_url_model.base_url
+
+			print(f'[+] Currently crawling {start_url}')
+
+			# Deleting the older details for the same url
+			crawl_URL_Table.objects.filter(base_url=start_url).delete()
+			current_crawl_url_model = crawl_URL_Table(seed_url=seed_url,base_url=start_url,parent_url=parent_url,scrapped_URL_Table=start_url_model,crawl_depth=crawl_depth)			
+			current_crawl_url_model.save() # Only Saving Record if already Scraped the URL !	
+
+			links = self.get_links_from_a_tags(start_url_model.html)
 
 			filterd_links = []
 
@@ -463,20 +479,27 @@ class DiggySpidy:
 										if self.base_url_domain not in link:
 											continue
 									filterd_links.append(link)
-		
+
+			filterd_links = self.purify_links(start_url_model_base_url,filterd_links)
+
 			self.unique_links += filterd_links
-			print(filterd_links)
+
 			for link in filterd_links:
 				try:
-					if (len(threading.enumerate())-1) > MAX_THREAD_COUNT:
-						Thread(target=self.crawl,args=(link,crawl_depth+1,)).start()
-					else:
-						self.crawl(link,crawl_depth=crawl_depth+1)
-					
+					# if (len(threading.enumerate())-1) > MAX_THREAD_COUNT:
+					# 	Thread(target=self.crawl,args=(seed_url,link,crawl_depth+1,)).start()
+					# else:
+					# 	self.crawl(seed_url,link,crawl_depth=crawl_depth+1)
+					self.crawl(seed_url=seed_url,parent_url=start_url,start_url=link,crawl_depth=crawl_depth+1)
 					time.sleep(self.pause_crawl_duration)
 				except Exception as e:
-					print(f"[-] Unable to crawl {link} (E:{e})")
-					self.failed_scraped_links.append(start_url)	
+					print(f"[-] Unable to crawl {start_url} (E:{e})")
+					self.failed_scraped_links.append(start_url)
+					current_crawl_url_model.objects.filter(base_url=start_url).delete()
+					print(f'[+] Successfully Deleted the {start_url} from record !')
+		else:
+			print(f"[-] Failed to crawl {start_url} as the link was not scraped !")
+			
 
 	def __init__(self):
 
@@ -611,7 +634,7 @@ if __name__ == '__main__':
 
 			ds_obj.default_output_folder_location = OUTPUT_SAVING_PATH
 
-			ds_obj.create_url_folder(url=ds_obj.base_url,save_to=ds_obj.default_output_folder_location)
+			# ds_obj.create_url_folder(url=ds_obj.base_url,save_to=ds_obj.default_output_folder_location)
 
 			ds_obj.extra_data_folder = os.path.join(ds_obj.get_url_folder(url=ds_obj.base_url,save_to=ds_obj.default_output_folder_location),"extra_data")
 			

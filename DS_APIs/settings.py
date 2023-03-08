@@ -26,6 +26,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# to disable the check
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # Application definition
 
